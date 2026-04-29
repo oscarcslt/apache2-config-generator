@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apache2 Config Generator — OCASDEV</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy-950: #020b1a;
+  --navy-900: #050f22;
+  --navy-850: #071428;
+  --navy-800: #0a1c36;
+  --navy-750: #0d2348;
+  --navy-700: #112d5e;
+  --navy-600: #183d7a;
+  --navy-500: #1e4d96;
+  --navy-400: #2a62b5;
+  --blue-400: #3b7fd4;
+  --blue-300: #5c9de0;
+  --blue-200: #8abbec;
+  --blue-100: #b8d7f5;
+  --blue-50:  #e5f1fc;
+  --cyan-400: #0ea5c8;
+  --green-400: #10b981;
+  --green-300: #34d399;
+  --amber-400: #f59e0b;
+  --red-400:  #ef4444;
+  --red-300:  #f87171;
+  --text-primary:   #e8f0fe;
+  --text-secondary: #8ba8cc;
+  --text-muted:     #4a6380;
+  --border:       rgba(59,127,212,.18);
+  --border-hover: rgba(59,127,212,.35);
+  --surface:      rgba(10,28,54,.8);
+  --input-bg:     rgba(5,15,34,.7);
+  --accent:       #3b7fd4;
+  --accent-glow:  rgba(59,127,212,.15);
+  --font-ui:      'DM Sans', sans-serif;
+  --font-display: 'Syne', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-ui);background:var(--navy-950);color:var(--text-primary);min-height:100vh;font-size:14px;line-height:1.6}
+
+/* HEADER */
+header{background:rgba(2,11,26,.95);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none}
+.logo img{height:28px}
+.logo-sep{width:1px;height:20px;background:var(--border)}
+.logo-tool{font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--text-primary);letter-spacing:.04em}
+.logo-tool span{color:var(--blue-300)}
+.header-actions{display:flex;gap:8px;align-items:center}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:255px 1fr 390px;min-height:calc(100vh - 60px)}
+
+/* SIDEBAR */
+.sidebar{background:rgba(5,15,34,.6);border-right:1px solid var(--border);padding:1.5rem 0;overflow-y:auto;position:sticky;top:60px;height:calc(100vh - 60px)}
+.sidebar-section-label{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--text-muted);text-transform:uppercase;padding:1rem 1.25rem .4rem}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:.5rem 1.25rem;cursor:pointer;color:var(--text-secondary);font-size:13px;font-weight:500;border-left:2px solid transparent;transition:all .15s;user-select:none}
+.sidebar-item:hover{color:var(--text-primary);background:var(--accent-glow)}
+.sidebar-item.active{color:var(--blue-300);border-left-color:var(--blue-400);background:rgba(59,127,212,.08)}
+.sidebar-icon{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.sidebar-item.active .sidebar-icon{opacity:1}
+
+/* MAIN */
+main{padding:2rem;overflow-y:auto;max-height:calc(100vh - 60px)}
+.section-panel{display:none}
+.section-panel.active{display:block}
+.panel-header{margin-bottom:1.75rem}
+.panel-title{font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+.panel-desc{font-size:13px;color:var(--text-secondary)}
+
+/* FORMS */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.span-2{grid-column:span 2}
+.form-group.span-3{grid-column:span 3}
+label{font-size:12px;font-weight:600;color:var(--text-secondary);letter-spacing:.04em;text-transform:uppercase}
+input[type=text],input[type=number],input[type=password],select,textarea{background:var(--input-bg);border:1px solid var(--border);color:var(--text-primary);padding:.5rem .75rem;border-radius:6px;font-family:var(--font-ui);font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--blue-400);box-shadow:0 0 0 3px rgba(59,127,212,.12)}
+select{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a6380' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center;padding-right:2.25rem}
+select option{background:var(--navy-850);color:var(--text-primary)}
+textarea{resize:vertical;min-height:80px;font-family:var(--font-mono);font-size:12px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:border-color .15s}
+.toggle-row:hover{border-color:var(--border-hover)}
+.toggle-label strong{font-size:13px;font-weight:500;color:var(--text-primary);display:block}
+.toggle-label span{font-size:11px;color:var(--text-muted)}
+.toggle-switch{width:36px;height:20px;background:var(--navy-700);border-radius:10px;position:relative;transition:background .2s;flex-shrink:0;border:1px solid var(--border)}
+.toggle-switch::after{content:'';position:absolute;left:2px;top:2px;width:14px;height:14px;background:var(--text-muted);border-radius:50%;transition:transform .2s,background .2s}
+.toggle-row.on .toggle-switch{background:var(--navy-600);border-color:var(--blue-400)}
+.toggle-row.on .toggle-switch::after{transform:translateX(16px);background:var(--blue-300)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--blue-300);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.subsection{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.subsection:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+
+/* ENTRY LIST */
+.entry-list{display:flex;flex-direction:column;gap:8px}
+.entry-item{display:grid;gap:8px;align-items:center;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;padding:.5rem .75rem}
+.entry-item input{border:none;background:transparent;padding:0}
+.entry-item input:focus{box-shadow:none}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:.45rem 1rem;border-radius:6px;font-family:var(--font-ui);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid transparent;text-decoration:none;white-space:nowrap}
+.btn-primary{background:var(--blue-400);color:#fff;border-color:var(--blue-300)}
+.btn-primary:hover{background:var(--blue-300)}
+.btn-secondary{background:transparent;color:var(--text-secondary);border-color:var(--border)}
+.btn-secondary:hover{color:var(--text-primary);border-color:var(--border-hover);background:var(--accent-glow)}
+.btn-danger{background:transparent;color:var(--red-400);border-color:transparent;padding:.3rem .5rem}
+.btn-danger:hover{background:rgba(239,68,68,.1)}
+.btn-sm{padding:.3rem .7rem;font-size:12px}
+.btn-add{background:transparent;border:1px dashed var(--border-hover);color:var(--text-secondary);width:100%;padding:.5rem;margin-top:8px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-add:hover{border-color:var(--blue-400);color:var(--blue-300);background:var(--accent-glow)}
+
+/* OUTPUT */
+.output-panel{background:var(--navy-900);border-left:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:60px;height:calc(100vh - 60px)}
+.output-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.output-title{font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--blue-300);letter-spacing:.06em;text-transform:uppercase}
+.output-tabs{display:flex;gap:2px;padding:.5rem 1rem;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto}
+.output-tab{font-size:11px;font-weight:600;padding:.3rem .75rem;border-radius:4px;cursor:pointer;color:var(--text-muted);border:1px solid transparent;white-space:nowrap;transition:all .15s}
+.output-tab:hover{color:var(--text-secondary);background:var(--accent-glow)}
+.output-tab.active{color:var(--blue-300);background:rgba(59,127,212,.1);border-color:var(--border)}
+.output-code{flex:1;overflow-y:auto;padding:1rem}
+.output-code pre{font-family:var(--font-mono);font-size:11.5px;line-height:1.7;color:var(--text-secondary);white-space:pre;tab-size:4}
+.kw{color:#7dd3fc}.str{color:#86efac}.num{color:#fde68a}.cmt{color:var(--text-muted);font-style:italic}.key{color:#c4b5fd}.sec{color:var(--blue-300);font-weight:700}.val{color:#f9a8d4}
+.output-actions{padding:.75rem 1.25rem;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.status-bar{display:flex;align-items:center;gap:1rem;padding:.4rem 1.25rem;background:rgba(2,11,26,.8);border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);flex-shrink:0}
+.status-dot{width:6px;height:6px;border-radius:50%;background:var(--green-400);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* MISC */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.badge-blue{background:rgba(59,127,212,.15);color:var(--blue-300);border:1px solid rgba(59,127,212,.25)}
+.badge-green{background:rgba(16,185,129,.1);color:var(--green-300);border:1px solid rgba(16,185,129,.2)}
+.badge-amber{background:rgba(245,158,11,.1);color:var(--amber-400);border:1px solid rgba(245,158,11,.2)}
+.hint{font-size:11px;color:var(--text-muted);margin-top:4px}
+.copy-flash{position:fixed;bottom:2rem;right:2rem;background:var(--green-400);color:#fff;padding:.6rem 1.2rem;border-radius:8px;font-size:13px;font-weight:600;z-index:999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+.copy-flash.show{opacity:1;transform:translateY(0)}
+.directive-block{background:rgba(5,15,34,.5);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:.75rem}
+.directive-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.zone-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--navy-700);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--navy-600)}
+@media(max-width:1200px){.app{grid-template-columns:220px 1fr 330px}}
+@media(max-width:900px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;padding:.5rem}.sidebar-section-label{display:none}.sidebar-item{border-left:none;border-bottom:2px solid transparent;padding:.4rem .75rem}.sidebar-item.active{border-bottom-color:var(--blue-400)}.output-panel{position:static;height:auto}.output-code{height:400px}}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="https://ocasdev.com" class="logo" target="_blank">
+    <img src="https://cdn.ocasdev.com/public/img/ocasdev.png" alt="OCASDEV">
+    <div class="logo-sep"></div>
+    <span class="logo-tool">Apache2 <span>Config</span> Generator</span>
+  </a>
+  <div class="header-actions">
+    <span class="badge badge-blue">v2.0</span>
+    <a href="https://httpd.apache.org/docs/2.4/" target="_blank" class="btn btn-secondary btn-sm">Docs Apache2</a>
+  </div>
+</header>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div>
+    <div class="sidebar-section-label">Serveur</div>
+    <div class="sidebar-item active" onclick="show('global')" data-s="global">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2c-2 2-3 4-3 6s1 4 3 6M8 2c2 2 3 4 3 6s-1 4-3 6M2 8h12"/></svg>
+      Paramètres globaux
+    </div>
+    <div class="sidebar-item" onclick="show('mpm')" data-s="mpm">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      MPM (Worker/Event/Prefork)
+    </div>
+    <div class="sidebar-item" onclick="show('modules')" data-s="modules">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/><circle cx="12" cy="12" r="2"/></svg>
+      Modules
+    </div>
+    <div class="sidebar-item" onclick="show('logging')" data-s="logging">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h6"/></svg>
+      Logs
+    </div>
+  </div>
+  <div>
+    <div class="sidebar-section-label">VirtualHost</div>
+    <div class="sidebar-item" onclick="show('vhost')" data-s="vhost">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="4" rx="1"/><rect x="2" y="9" width="12" height="4" rx="1"/><circle cx="13" cy="5" r="1" fill="currentColor"/><circle cx="13" cy="11" r="1" fill="currentColor"/></svg>
+      VirtualHost
+    </div>
+    <div class="sidebar-item" onclick="show('ssl')" data-s="ssl">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L3 4v4c0 3 2.3 5.4 5 6 2.7-.6 5-3 5-6V4z"/></svg>
+      SSL / TLS
+    </div>
+    <div class="sidebar-item" onclick="show('directory')" data-s="directory">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h5l1 2h6v7H2z"/></svg>
+      Directory / Files
+    </div>
+    <div class="sidebar-item" onclick="show('htaccess')" data-s="htaccess">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h7l3 3v7H3z"/><path d="M10 3v3h3"/></svg>
+      .htaccess
+    </div>
+  </div>
+  <div>
+    <div class="sidebar-section-label">Proxy & Backend</div>
+    <div class="sidebar-item" onclick="show('proxy')" data-s="proxy">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M10 4l4 4-4 4"/></svg>
+      mod_proxy
+    </div>
+    <div class="sidebar-item" onclick="show('balancer')" data-s="balancer">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><circle cx="2" cy="8" r="1.5"/><circle cx="14" cy="8" r="1.5"/><path d="M4 8h2M10 8h2"/></svg>
+      Load Balancer
+    </div>
+    <div class="sidebar-item" onclick="show('cache')" data-s="cache">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="8" cy="5" rx="6" ry="2"/><path d="M2 5v6c0 1.1 2.7 2 6 2s6-.9 6-2V5"/><path d="M2 8c0 1.1 2.7 2 6 2s6-.9 6-2"/></svg>
+      Cache (mod_cache)
+    </div>
+  </div>
+  <div>
+    <div class="sidebar-section-label">Sécurité</div>
+    <div class="sidebar-item" onclick="show('headers')" data-s="headers">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h6"/></svg>
+      mod_headers
+    </div>
+    <div class="sidebar-item" onclick="show('security')" data-s="security">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v4M8 11v.5"/></svg>
+      mod_security / Hardening
+    </div>
+    <div class="sidebar-item" onclick="show('ratelimit')" data-s="ratelimit">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v6l3 3"/><circle cx="8" cy="8" r="6"/></svg>
+      Rate Limiting
+    </div>
+    <div class="sidebar-item" onclick="show('auth')" data-s="auth">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="7" width="8" height="7" rx="1"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>
+      Auth & Access
+    </div>
+  </div>
+  <div>
+    <div class="sidebar-section-label">Performance</div>
+    <div class="sidebar-item" onclick="show('compression')" data-s="compression">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 8h8M8 4l-4 4 4 4"/></svg>
+      mod_deflate / Brotli
+    </div>
+    <div class="sidebar-item" onclick="show('expires')" data-s="expires">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 3"/></svg>
+      mod_expires
+    </div>
+  </div>
+  <div>
+    <div class="sidebar-section-label">Avancé</div>
+    <div class="sidebar-item" onclick="show('rewrite')" data-s="rewrite">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M6 4l-4 4 4 4M10 4l4 4-4 4"/></svg>
+      mod_rewrite
+    </div>
+    <div class="sidebar-item" onclick="show('php')" data-s="php">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 6h12v4H2z"/><path d="M5 6V4h6v2"/></svg>
+      PHP-FPM / CGI
+    </div>
+    <div class="sidebar-item" onclick="show('envvars')" data-s="envvars">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l5-2 5 2v4c0 2.5-2.5 4-5 4.5C5.5 13 3 11.5 3 9z"/></svg>
+      Variables & Env
+    </div>
+    <div class="sidebar-item" onclick="show('status')" data-s="status">
+      <svg class="sidebar-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h3l2-4 2 8 2-4h3"/></svg>
+      mod_status / Info
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main-content">
+
+  <!-- GLOBAL -->
+  <div class="section-panel active" id="panel-global">
+    <div class="panel-header">
+      <div class="panel-title">Paramètres globaux</div>
+      <div class="panel-desc">apache2.conf — configuration du serveur principal</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Processus & Utilisateur</div>
+      <div class="form-grid">
+        <div class="form-group"><label>User</label><input type="text" id="g_user" value="www-data"></div>
+        <div class="form-group"><label>Group</label><input type="text" id="g_group" value="www-data"></div>
+        <div class="form-group"><label>PidFile</label><input type="text" id="g_pidfile" value="${APACHE_PID_FILE}"></div>
+        <div class="form-group"><label>ServerRoot</label><input type="text" id="g_serverroot" value="/etc/apache2"></div>
+        <div class="form-group"><label>ServerName</label><input type="text" id="g_servername" value="example.com" placeholder="example.com"></div>
+        <div class="form-group"><label>ServerAdmin</label><input type="text" id="g_serveradmin" value="admin@example.com"></div>
+        <div class="form-group"><label>DocumentRoot</label><input type="text" id="g_docroot" value="/var/www/html"></div>
+        <div class="form-group"><label>DefaultType</label>
+          <select id="g_defaulttype">
+            <option value="none">none (recommandé)</option>
+            <option value="application/octet-stream">application/octet-stream</option>
+            <option value="text/html">text/html</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Timeouts & Connexions</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group"><label>Timeout</label><input type="number" id="g_timeout" value="300"></div>
+        <div class="form-group"><label>KeepAliveTimeout</label><input type="number" id="g_katimeout" value="5"></div>
+        <div class="form-group"><label>MaxKeepAliveRequests</label><input type="number" id="g_maxka" value="100"></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="g_keepalive"><div class="toggle-label"><strong>KeepAlive On</strong><span>Connexions persistantes</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="g_usecanonical"><div class="toggle-label"><strong>UseCanonicalName Off</strong><span>Utilise l'en-tête Host:</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>LimitRequestBody</label><input type="number" id="g_limitbody" value="10485760" placeholder="10MB en octets"></div>
+        <div class="form-group"><label>LimitRequestFields</label><input type="number" id="g_limitfields" value="100"></div>
+        <div class="form-group"><label>LimitRequestFieldSize</label><input type="number" id="g_limitfieldsize" value="8190"></div>
+        <div class="form-group"><label>LimitRequestLine</label><input type="number" id="g_limitline" value="8190"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sécurité globale</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="g_servertokens"><div class="toggle-label"><strong>ServerTokens Prod</strong><span>Masquer la version Apache</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="g_serversign"><div class="toggle-label"><strong>ServerSignature Off</strong><span>Supprimer la signature des pages d'erreur</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="g_etag"><div class="toggle-label"><strong>FileETag None</strong><span>Désactiver l'ETag (infos inode)</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="g_traceenable"><div class="toggle-label"><strong>TraceEnable Off</strong><span>Bloquer la méthode TRACE</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MPM -->
+  <div class="section-panel" id="panel-mpm">
+    <div class="panel-header">
+      <div class="panel-title">MPM — Multi-Processing Module</div>
+      <div class="panel-desc">Choisissez et configurez le modèle de traitement des requêtes</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sélection MPM</div>
+      <div class="form-group"><label>MPM actif</label>
+        <select id="mpm_type" onchange="updateGen()">
+          <option value="event">event (recommandé, HTTP/2)</option>
+          <option value="worker">worker (threads)</option>
+          <option value="prefork">prefork (mod_php, compatibilité)</option>
+        </select>
+        <span class="hint">event est le MPM par défaut depuis Apache 2.4</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Paramètres MPM Event / Worker</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group"><label>StartServers</label><input type="number" id="mpm_startservers" value="2"></div>
+        <div class="form-group"><label>MinSpareThreads</label><input type="number" id="mpm_minsparethreads" value="25"></div>
+        <div class="form-group"><label>MaxSpareThreads</label><input type="number" id="mpm_maxsparethreads" value="75"></div>
+        <div class="form-group"><label>ThreadLimit</label><input type="number" id="mpm_threadlimit" value="64"></div>
+        <div class="form-group"><label>ThreadsPerChild</label><input type="number" id="mpm_threadsperchild" value="25"></div>
+        <div class="form-group"><label>MaxRequestWorkers</label><input type="number" id="mpm_maxrequestworkers" value="150"></div>
+        <div class="form-group"><label>MaxConnectionsPerChild</label><input type="number" id="mpm_maxconnperchild" value="0"></div>
+        <div class="form-group"><label>AsyncRequestWorkerFactor (event)</label><input type="number" id="mpm_asyncfactor" value="2"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Paramètres MPM Prefork</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group"><label>StartServers</label><input type="number" id="pf_startservers" value="5"></div>
+        <div class="form-group"><label>MinSpareServers</label><input type="number" id="pf_minspare" value="5"></div>
+        <div class="form-group"><label>MaxSpareServers</label><input type="number" id="pf_maxspare" value="10"></div>
+        <div class="form-group"><label>MaxRequestWorkers</label><input type="number" id="pf_maxworkers" value="150"></div>
+        <div class="form-group"><label>MaxConnectionsPerChild</label><input type="number" id="pf_maxconn" value="0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULES -->
+  <div class="section-panel" id="panel-modules">
+    <div class="panel-header">
+      <div class="panel-title">Modules Apache2</div>
+      <div class="panel-desc">LoadModule / a2enmod — modules à activer dans la config</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Modules essentiels</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_rewrite"><div class="toggle-label"><strong>mod_rewrite</strong><span>URL rewriting</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_ssl"><div class="toggle-label"><strong>mod_ssl</strong><span>HTTPS/TLS</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_headers"><div class="toggle-label"><strong>mod_headers</strong><span>Manipulation des headers</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_deflate"><div class="toggle-label"><strong>mod_deflate</strong><span>Compression gzip/brotli</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_expires"><div class="toggle-label"><strong>mod_expires</strong><span>Cache navigateur</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_proxy"><div class="toggle-label"><strong>mod_proxy</strong><span>Reverse proxy</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_proxy_http"><div class="toggle-label"><strong>mod_proxy_http</strong><span>Proxy HTTP/HTTPS</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="mod_proxy_fcgi"><div class="toggle-label"><strong>mod_proxy_fcgi</strong><span>FastCGI (PHP-FPM)</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_http2"><div class="toggle-label"><strong>mod_http2</strong><span>Protocole HTTP/2</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_security2"><div class="toggle-label"><strong>mod_security2</strong><span>WAF Apache</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_ratelimit"><div class="toggle-label"><strong>mod_ratelimit</strong><span>Limitation bande passante</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_evasive"><div class="toggle-label"><strong>mod_evasive</strong><span>Anti-DDoS basique</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_cache"><div class="toggle-label"><strong>mod_cache</strong><span>Cache serveur</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_cache_disk"><div class="toggle-label"><strong>mod_cache_disk</strong><span>Cache disque</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_brotli"><div class="toggle-label"><strong>mod_brotli</strong><span>Compression Brotli</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_remoteip"><div class="toggle-label"><strong>mod_remoteip</strong><span>IP réelle derrière un proxy</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_status"><div class="toggle-label"><strong>mod_status</strong><span>Page de statut</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_info"><div class="toggle-label"><strong>mod_info</strong><span>Page d'informations</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_autoindex"><div class="toggle-label"><strong>mod_autoindex</strong><span>Listing répertoires</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_dir"><div class="toggle-label"><strong>mod_dir</strong><span>Index de répertoires</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_alias"><div class="toggle-label"><strong>mod_alias</strong><span>Alias et ScriptAlias</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_env"><div class="toggle-label"><strong>mod_env</strong><span>Variables d'environnement</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="mod_setenvif"><div class="toggle-label"><strong>mod_setenvif</strong><span>SetEnvIf conditionnel</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGGING -->
+  <div class="section-panel" id="panel-logging">
+    <div class="panel-header">
+      <div class="panel-title">Logs</div>
+      <div class="panel-desc">ErrorLog, CustomLog, LogFormat</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Error Log</div>
+      <div class="form-grid">
+        <div class="form-group"><label>ErrorLog</label><input type="text" id="log_errorlog" value="${APACHE_LOG_DIR}/error.log"></div>
+        <div class="form-group"><label>LogLevel</label>
+          <select id="log_loglevel">
+            <option value="warn">warn</option>
+            <option value="error">error</option>
+            <option value="crit">crit</option>
+            <option value="notice">notice</option>
+            <option value="info">info</option>
+            <option value="debug">debug</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Access Log & Formats</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Format prédéfini</label>
+          <select id="log_format_preset" onchange="applyLogPreset()">
+            <option value="combined">combined (standard)</option>
+            <option value="common">common</option>
+            <option value="vhost_combined">vhost_combined</option>
+            <option value="json">JSON structured</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Nom du format</label><input type="text" id="log_format_name" value="combined"></div>
+        <div class="form-group span-2">
+          <label>LogFormat directive</label>
+          <input type="text" id="log_format_str" value='"%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""'>
+        </div>
+        <div class="form-group"><label>CustomLog path</label><input type="text" id="log_customlog" value="${APACHE_LOG_DIR}/access.log"></div>
+        <div class="form-group"><label>Pipe / filtrage</label>
+          <select id="log_pipe">
+            <option value="">Fichier direct</option>
+            <option value="pipe">Pipe vers programme</option>
+            <option value="rotatelogs">rotatelogs</option>
+          </select>
+        </div>
+        <div class="toggle-row" onclick="toggle(this)" id="log_forensic"><div class="toggle-label"><strong>mod_log_forensic</strong><span>Log forensic avant/après requête</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="log_perf"><div class="toggle-label"><strong>Inclure %D (durée)</strong><span>Temps de traitement en µs</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIRTUALHOST -->
+  <div class="section-panel" id="panel-vhost">
+    <div class="panel-header">
+      <div class="panel-title">VirtualHost</div>
+      <div class="panel-desc">Bloc &lt;VirtualHost&gt; principal</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Identité du site</div>
+      <div class="form-grid">
+        <div class="form-group"><label>ServerName</label><input type="text" id="vh_servername" value="example.com"></div>
+        <div class="form-group"><label>ServerAlias</label><input type="text" id="vh_serveralias" value="www.example.com"></div>
+        <div class="form-group"><label>DocumentRoot</label><input type="text" id="vh_docroot" value="/var/www/example.com/public"></div>
+        <div class="form-group"><label>ServerAdmin</label><input type="text" id="vh_serveradmin" value="admin@example.com"></div>
+        <div class="form-group"><label>Listen port HTTP</label><input type="text" id="vh_port_http" value="80"></div>
+        <div class="form-group"><label>Listen port HTTPS</label><input type="text" id="vh_port_https" value="443"></div>
+        <div class="form-group"><label>DirectoryIndex</label><input type="text" id="vh_dirindex" value="index.html index.php"></div>
+        <div class="form-group"><label>Options</label>
+          <select id="vh_options">
+            <option value="FollowSymLinks">FollowSymLinks</option>
+            <option value="-Indexes +FollowSymLinks">-Indexes +FollowSymLinks</option>
+            <option value="None">None</option>
+            <option value="All">All</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Redirect HTTP → HTTPS</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="vh_redirect_https">
+        <div class="toggle-label"><strong>Redirection permanente vers HTTPS</strong><span>VirtualHost port 80 séparé avec Redirect 301</span></div>
+        <div class="toggle-switch"></div>
+      </div>
+      <div class="toggle-row" onclick="toggle(this)" id="vh_redirect_www">
+        <div class="toggle-label"><strong>Redirection non-www → www</strong><span>RewriteRule ^(.*)$ https://www.example.com$1</span></div>
+        <div class="toggle-switch"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Error Documents</div>
+      <div id="errordocs" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:80px 1fr auto;">
+          <input type="text" value="404" placeholder="Code">
+          <input type="text" value="/errors/404.html" placeholder="URI ou message">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+        <div class="entry-item" style="grid-template-columns:80px 1fr auto;">
+          <input type="text" value="500" placeholder="Code">
+          <input type="text" value="/errors/50x.html" placeholder="URI">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addErrorDoc()">+ Ajouter un ErrorDocument</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Alias & ScriptAlias</div>
+      <div id="aliases" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:auto 1fr 1fr auto;">
+          <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;">
+            <option>Alias</option><option>ScriptAlias</option><option>AliasMatch</option>
+          </select>
+          <input type="text" value="/static/" placeholder="/url-path/">
+          <input type="text" value="/var/www/static/" placeholder="/filesystem/path/">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addAlias()">+ Ajouter un Alias</button>
+    </div>
+  </div>
+
+  <!-- SSL -->
+  <div class="section-panel" id="panel-ssl">
+    <div class="panel-header">
+      <div class="panel-title">SSL / TLS</div>
+      <div class="panel-desc">mod_ssl — configuration HTTPS complète</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Certificats</div>
+      <div class="form-grid">
+        <div class="form-group"><label>SSLCertificateFile</label><input type="text" id="ssl_cert" value="/etc/ssl/certs/example.com.crt"></div>
+        <div class="form-group"><label>SSLCertificateKeyFile</label><input type="text" id="ssl_key" value="/etc/ssl/private/example.com.key"></div>
+        <div class="form-group"><label>SSLCertificateChainFile</label><input type="text" id="ssl_chain" placeholder="/etc/ssl/certs/ca-chain.crt"></div>
+        <div class="form-group"><label>SSLCACertificateFile (mTLS)</label><input type="text" id="ssl_cafile" placeholder="/etc/ssl/ca.crt"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Protocoles & Ciphers</div>
+      <div class="form-grid">
+        <div class="form-group"><label>SSLProtocol</label>
+          <select id="ssl_protocol">
+            <option value="all -SSLv3 -TLSv1 -TLSv1.1">-SSLv3 -TLSv1 -TLSv1.1 (recommandé)</option>
+            <option value="-all +TLSv1.3">TLSv1.3 uniquement</option>
+            <option value="all -SSLv2 -SSLv3">-SSLv2 -SSLv3 (large compat)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>SSLHonorCipherOrder</label>
+          <select id="ssl_honor">
+            <option value="on">on</option>
+            <option value="off">off</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label>Preset Ciphers</label>
+          <select id="ssl_cipher_preset" onchange="applySSLCipherPreset()">
+            <option value="modern">Modern (TLS 1.3 only)</option>
+            <option value="intermediate" selected>Intermediate (recommandé)</option>
+            <option value="old">Old (max compat)</option>
+            <option value="custom">Custom</option>
+          </select>
+          <input type="text" id="ssl_ciphers" style="margin-top:6px;font-family:var(--font-mono);font-size:11px;" value="ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384">
+        </div>
+        <div class="form-group"><label>SSLOpenSSLConfCmd Curves</label><input type="text" id="ssl_curves" value="X25519:prime256v1:secp384r1"></div>
+        <div class="form-group"><label>SSLSessionTickets</label>
+          <select id="ssl_tickets">
+            <option value="off">off (sécurité)</option>
+            <option value="on">on</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Session & OCSP Stapling</div>
+      <div class="form-grid form-grid-3">
+        <div class="form-group"><label>SSLSessionCache</label><input type="text" id="ssl_session_cache" value="shmcb:${APACHE_RUN_DIR}/ssl_scache(512000)"></div>
+        <div class="form-group"><label>SSLSessionCacheTimeout</label><input type="number" id="ssl_session_timeout" value="300"></div>
+        <div class="form-group"><label>SSLUseStapling</label>
+          <select id="ssl_stapling">
+            <option value="on">on</option>
+            <option value="off">off</option>
+          </select>
+        </div>
+        <div class="form-group"><label>SSLStaplingCache</label><input type="text" id="ssl_stapling_cache" value="shmcb:${APACHE_RUN_DIR}/ssl_stapling(32768)"></div>
+        <div class="form-group"><label>SSLStaplingResponderTimeout</label><input type="number" id="ssl_stapling_timeout" value="5"></div>
+        <div class="form-group"><label>SSLStaplingReturnResponderErrors</label>
+          <select id="ssl_stapling_errors">
+            <option value="off">off</option>
+            <option value="on">on</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Client Auth (mTLS)</div>
+      <div class="toggle-row" onclick="toggle(this)" id="ssl_mtls"><div class="toggle-label"><strong>Mutual TLS (mTLS)</strong><span>SSLVerifyClient require</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>SSLVerifyClient</label>
+          <select id="ssl_verify_client">
+            <option value="require">require</option>
+            <option value="optional">optional</option>
+            <option value="optional_no_ca">optional_no_ca</option>
+          </select>
+        </div>
+        <div class="form-group"><label>SSLVerifyDepth</label><input type="number" id="ssl_verify_depth" value="2"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">HTTP/2</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="ssl_http2"><div class="toggle-label"><strong>Protocols h2 http/1.1</strong><span>Activer HTTP/2 sur ce VirtualHost</span></div><div class="toggle-switch"></div></div>
+      <div class="toggle-row" onclick="toggle(this)" id="ssl_http2_push"><div class="toggle-label"><strong>H2Push on</strong><span>HTTP/2 Server Push</span></div><div class="toggle-switch"></div></div>
+      <div class="form-group" style="margin-top:.75rem;"><label>H2MaxWorkers</label><input type="number" id="ssl_h2_workers" value="10"></div>
+    </div>
+  </div>
+
+  <!-- DIRECTORY -->
+  <div class="section-panel" id="panel-directory">
+    <div class="panel-header">
+      <div class="panel-title">Directory / Files / Location</div>
+      <div class="panel-desc">Blocs de contrôle d'accès et options</div>
+    </div>
+    <div id="dir-blocks">
+      <div class="directive-block">
+        <div class="directive-header">
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--blue-300)">&lt;Directory /var/www/example.com/public&gt;</span>
+          <button class="btn btn-danger btn-sm" onclick="this.closest('.directive-block').remove();updateGen()">✕</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Path</label><input type="text" value="/var/www/example.com/public" oninput="updateGen()"></div>
+          <div class="form-group"><label>Type</label>
+            <select onchange="updateGen()"><option>Directory</option><option>Files</option><option>FilesMatch</option><option>Location</option><option>LocationMatch</option></select>
+          </div>
+          <div class="form-group"><label>Options</label><input type="text" value="-Indexes +FollowSymLinks" oninput="updateGen()"></div>
+          <div class="form-group"><label>AllowOverride</label>
+            <select onchange="updateGen()"><option>None</option><option>All</option><option>FileInfo</option><option>AuthConfig</option><option>Limit</option><option>FileInfo AuthConfig Limit</option></select>
+          </div>
+          <div class="form-group"><label>Require</label>
+            <select onchange="updateGen()"><option value="all granted">all granted</option><option value="all denied">all denied</option><option value="ip 127.0.0.1">ip (local)</option><option value="valid-user">valid-user</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="directive-block">
+        <div class="directive-header">
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--blue-300)">&lt;Directory /&gt; — Sécurité racine</span>
+          <button class="btn btn-danger btn-sm" onclick="this.closest('.directive-block').remove();updateGen()">✕</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Path</label><input type="text" value="/" oninput="updateGen()"></div>
+          <div class="form-group"><label>Type</label><select onchange="updateGen()"><option>Directory</option><option>Files</option><option>Location</option></select></div>
+          <div class="form-group"><label>Options</label><input type="text" value="None" oninput="updateGen()"></div>
+          <div class="form-group"><label>AllowOverride</label><select onchange="updateGen()"><option>None</option><option>All</option><option>FileInfo</option></select></div>
+          <div class="form-group"><label>Require</label><select onchange="updateGen()"><option value="all denied">all denied</option><option value="all granted">all granted</option></select></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-add" onclick="addDirBlock()">+ Ajouter un bloc Directory / Files / Location</button>
+  </div>
+
+  <!-- HTACCESS -->
+  <div class="section-panel" id="panel-htaccess">
+    <div class="panel-header">
+      <div class="panel-title">.htaccess</div>
+      <div class="panel-desc">Fichier de surcharge par répertoire</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Contenu .htaccess</div>
+      <span class="hint" style="margin-bottom:.75rem;display:block;">Ce contenu sera généré dans un onglet .htaccess séparé</span>
+      <div class="form-group">
+        <label>AuthType (Basic Auth)</label>
+        <select id="hta_authtype"><option value="">Aucun</option><option value="Basic">Basic</option><option value="Digest">Digest</option></select>
+      </div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>AuthName</label><input type="text" id="hta_authname" value="Protected Area"></div>
+        <div class="form-group"><label>AuthUserFile</label><input type="text" id="hta_authuserfile" value="/etc/apache2/.htpasswd"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Redirections .htaccess</div>
+      <div id="hta-redirects" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:auto 1fr 1fr auto;">
+          <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;">
+            <option>Redirect 301</option><option>Redirect 302</option><option>RedirectMatch 301</option>
+          </select>
+          <input type="text" value="/old-page" placeholder="URL source">
+          <input type="text" value="https://example.com/new-page" placeholder="URL dest">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addHtaRedirect()">+ Ajouter une redirection</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Options diverses .htaccess</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="hta_noindex"><div class="toggle-label"><strong>Options -Indexes</strong><span>Interdire le listing de répertoires</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="hta_followsym"><div class="toggle-label"><strong>Options +FollowSymLinks</strong><span>Suivre les liens symboliques</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="hta_charset"><div class="toggle-label"><strong>AddDefaultCharset UTF-8</strong><span>Charset par défaut</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="hta_php_short"><div class="toggle-label"><strong>php_flag short_open_tag off</strong><span>Désactiver &lt;?</span></div><div class="toggle-switch"></div></div>
+      </div>
+      <div class="form-group" style="margin-top:.75rem;"><label>Directives personnalisées</label><textarea id="hta_custom" rows="5" placeholder="# Directives libres&#10;Options -Indexes&#10;DirectoryIndex index.html index.php"></textarea></div>
+    </div>
+  </div>
+
+  <!-- PROXY -->
+  <div class="section-panel" id="panel-proxy">
+    <div class="panel-header">
+      <div class="panel-title">mod_proxy</div>
+      <div class="panel-desc">Reverse proxy, ProxyPass, ProxyPassReverse</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Configuration proxy</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="p_engine"><div class="toggle-label"><strong>ProxyRequests Off</strong><span>Désactiver le proxy direct (sécurité)</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="p_preserve_host"><div class="toggle-label"><strong>ProxyPreserveHost On</strong><span>Transmettre l'en-tête Host</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="p_add_headers"><div class="toggle-label"><strong>X-Forwarded-For / Proto / Host</strong><span>Headers de forwarding</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="p_ssl_verify"><div class="toggle-label"><strong>SSLProxyVerify require</strong><span>Vérifier le certificat backend</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>ProxyTimeout</label><input type="number" id="p_timeout" value="90"></div>
+        <div class="form-group"><label>ProxyBadHeader</label>
+          <select id="p_bad_header">
+            <option value="IsError">IsError</option>
+            <option value="Ignore">Ignore</option>
+            <option value="StartBody">StartBody</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Règles ProxyPass</div>
+      <div id="proxy-rules" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:1fr 1fr auto auto;">
+          <input type="text" value="/api/" placeholder="URL path">
+          <input type="text" value="http://localhost:3000/api/" placeholder="Backend URL">
+          <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>ProxyPass</option><option>ProxyPassMatch</option></select>
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addProxyRule()">+ Ajouter une règle ProxyPass</button>
+    </div>
+    <div class="card">
+      <div class="card-title">WebSocket Proxy</div>
+      <div class="toggle-row" onclick="toggle(this)" id="p_ws"><div class="toggle-label"><strong>WebSocket (wss:// / ws://)</strong><span>mod_proxy_wstunnel</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>ProxyPass ws://</label><input type="text" id="p_ws_path" value="/ws/" placeholder="/ws/"></div>
+        <div class="form-group"><label>Backend ws</label><input type="text" id="p_ws_backend" value="ws://localhost:8080/" placeholder="ws://host:port/"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_remoteip</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="p_remoteip"><div class="toggle-label"><strong>RemoteIPHeader X-Forwarded-For</strong><span>Récupérer l'IP réelle</span></div><div class="toggle-switch"></div></div>
+      <div class="form-group" style="margin-top:.75rem;"><label>RemoteIPTrustedProxy</label><input type="text" id="p_trusted_proxy" value="127.0.0.1 ::1" placeholder="IPs proxy de confiance"></div>
+    </div>
+  </div>
+
+  <!-- BALANCER -->
+  <div class="section-panel" id="panel-balancer">
+    <div class="panel-header">
+      <div class="panel-title">Load Balancer</div>
+      <div class="panel-desc">mod_proxy_balancer — groupes de membres</div>
+    </div>
+    <div id="balancers-container">
+      <div class="card" data-balancer="0">
+        <div class="card-title">Groupe balancer <button class="btn btn-danger btn-sm" onclick="this.closest('.card').remove();updateGen()" style="margin-left:auto">✕</button></div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nom du cluster</label><input type="text" value="mycluster" oninput="updateGen()"></div>
+          <div class="form-group"><label>lbmethod</label>
+            <select onchange="updateGen()">
+              <option value="byrequests">byrequests (round robin)</option>
+              <option value="bytraffic">bytraffic</option>
+              <option value="bybusyness">bybusyness</option>
+              <option value="heartbeat">heartbeat</option>
+            </select>
+          </div>
+          <div class="form-group"><label>stickysession</label><input type="text" value="JSESSIONID|jsessionid" placeholder="cookie|query (facultatif)" oninput="updateGen()"></div>
+          <div class="form-group"><label>nofailover</label>
+            <select onchange="updateGen()"><option value="Off">Off</option><option value="On">On</option></select>
+          </div>
+        </div>
+        <div style="margin-top:.75rem;">
+          <label style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.5rem;display:block">BalancerMember</label>
+          <div class="entry-list" id="bm-0">
+            <div class="entry-item" style="grid-template-columns:1fr 60px 80px auto auto;">
+              <input type="text" value="http://10.0.0.1:8080" placeholder="http://host:port">
+              <input type="number" value="1" placeholder="loadfactor">
+              <input type="text" value="" placeholder="route (sticky)">
+              <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:11px;padding:0 4px;"><option>—</option><option>status=+H</option><option>status=D</option></select>
+              <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+            </div>
+            <div class="entry-item" style="grid-template-columns:1fr 60px 80px auto auto;">
+              <input type="text" value="http://10.0.0.2:8080" placeholder="http://host:port">
+              <input type="number" value="1" placeholder="loadfactor">
+              <input type="text" value="" placeholder="route">
+              <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:11px;padding:0 4px;"><option>—</option><option>status=+H</option><option>status=D</option></select>
+              <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+            </div>
+          </div>
+          <button class="btn-add" onclick="addBalancerMember(this,'0')">+ Ajouter un membre</button>
+        </div>
+        <div class="form-group" style="margin-top:.75rem;"><label>ProxyPass route</label><input type="text" value="/" placeholder="/" oninput="updateGen()"></div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="addBalancer()" style="margin-top:.5rem">+ Nouveau balancer</button>
+  </div>
+
+  <!-- CACHE -->
+  <div class="section-panel" id="panel-cache">
+    <div class="panel-header">
+      <div class="panel-title">Cache (mod_cache)</div>
+      <div class="panel-desc">Cache mémoire et disque des réponses HTTP</div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_cache_disk</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="cache_enabled"><div class="toggle-label"><strong>CacheEnable disk /</strong><span>Activer le cache disque</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>CacheRoot</label><input type="text" id="cache_root" value="/var/cache/apache2/mod_cache_disk"></div>
+        <div class="form-group"><label>CacheDirLevels</label><input type="number" id="cache_dirlevels" value="5"></div>
+        <div class="form-group"><label>CacheDirLength</label><input type="number" id="cache_dirlength" value="3"></div>
+        <div class="form-group"><label>CacheMaxFileSize</label><input type="text" id="cache_maxfilesize" value="1000000"></div>
+        <div class="form-group"><label>CacheMinFileSize</label><input type="number" id="cache_minfilesize" value="1"></div>
+        <div class="form-group"><label>CacheDefaultExpire</label><input type="number" id="cache_defaultexpire" value="3600"></div>
+        <div class="form-group"><label>CacheMaxExpire</label><input type="number" id="cache_maxexpire" value="86400"></div>
+        <div class="form-group"><label>CacheLastModifiedFactor</label><input type="text" id="cache_lmfactor" value="0.5"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_cache_socache (mémoire)</div>
+      <div class="toggle-row" onclick="toggle(this)" id="cache_socache"><div class="toggle-label"><strong>CacheEnable socache /</strong><span>Cache mémoire partagée</span></div><div class="toggle-switch"></div></div>
+      <div class="form-group" style="margin-top:.75rem;"><label>CacheSocache</label><input type="text" id="cache_socache_type" value="shmcb:${APACHE_RUN_DIR}/socache(1024000)"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Options cache</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="cache_ignorenolastmod"><div class="toggle-label"><strong>CacheIgnoreNoLastMod On</strong><span>Cacher même sans Last-Modified</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="cache_storenprivate"><div class="toggle-label"><strong>CacheStoreNoStore On</strong><span>Stocker malgré no-store</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="cache_lock"><div class="toggle-label"><strong>CacheLock On</strong><span>Verrou anti thundering herd</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>CacheLockPath</label><input type="text" id="cache_lockpath" value="/tmp/mod_cache-lock"></div>
+        <div class="form-group"><label>CacheLockMaxAge</label><input type="number" id="cache_lockmaxage" value="5"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADERS -->
+  <div class="section-panel" id="panel-headers">
+    <div class="panel-header">
+      <div class="panel-title">mod_headers</div>
+      <div class="panel-desc">Headers de sécurité, CORS, CSP</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Security Headers</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="h_hsts"><div class="toggle-label"><strong>HSTS</strong><span>Strict-Transport-Security</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>HSTS max-age</label><input type="text" id="h_hsts_age" value="31536000; includeSubDomains; preload"></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="h_xframe"><div class="toggle-label"><strong>X-Frame-Options</strong><span>Clickjacking</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>X-Frame-Options</label>
+          <select id="h_xframe_val"><option value="DENY">DENY</option><option value="SAMEORIGIN">SAMEORIGIN</option></select>
+        </div>
+        <div class="toggle-row on" onclick="toggle(this)" id="h_xctype"><div class="toggle-label"><strong>X-Content-Type-Options</strong><span>nosniff</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="h_xxss"><div class="toggle-label"><strong>X-XSS-Protection</strong><span>1; mode=block</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="h_referrer"><div class="toggle-label"><strong>Referrer-Policy</strong><span>strict-origin-when-cross-origin</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="h_permissions"><div class="toggle-label"><strong>Permissions-Policy</strong><span>camera, microphone, geolocation off</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Content Security Policy</div>
+      <div class="toggle-row" onclick="toggle(this)" id="h_csp"><div class="toggle-label"><strong>Activer CSP</strong><span>Content-Security-Policy</span></div><div class="toggle-switch"></div></div>
+      <div class="form-group" style="margin-top:.75rem;"><label>CSP directive</label>
+        <textarea id="h_csp_val" rows="3">default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;</textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">CORS</div>
+      <div class="toggle-row" onclick="toggle(this)" id="h_cors"><div class="toggle-label"><strong>Activer CORS</strong><span>Cross-Origin Resource Sharing</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>Access-Control-Allow-Origin</label><input type="text" id="h_cors_origin" value="*"></div>
+        <div class="form-group"><label>Access-Control-Allow-Methods</label><input type="text" id="h_cors_methods" value="GET, POST, PUT, DELETE, OPTIONS"></div>
+        <div class="form-group"><label>Access-Control-Allow-Headers</label><input type="text" id="h_cors_headers" value="Authorization, Content-Type, Accept"></div>
+        <div class="form-group"><label>Access-Control-Max-Age</label><input type="number" id="h_cors_age" value="86400"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Headers personnalisés</div>
+      <div id="custom-headers" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:auto 1fr 1fr auto;">
+          <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>Header always set</option><option>Header set</option><option>Header always unset</option><option>Header always append</option></select>
+          <input type="text" value="X-Powered-By" placeholder="Header">
+          <input type="text" value="" placeholder="Value (vide = unset)">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addCustomHeader()">+ Ajouter un header</button>
+    </div>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="section-panel" id="panel-security">
+    <div class="panel-header">
+      <div class="panel-title">Sécurité & Hardening</div>
+      <div class="panel-desc">mod_security, blocages, restrictions</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Blocage chemins sensibles</div>
+      <div class="form-grid">
+        <div class="toggle-row on" onclick="toggle(this)" id="sec_block_dotfiles"><div class="toggle-label"><strong>Bloquer les dotfiles</strong><span>.git .env .htpasswd .DS_Store</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="sec_block_backup"><div class="toggle-label"><strong>Bloquer les backups</strong><span>.bak .old .sql .zip .tar .gz</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="sec_block_xmlrpc"><div class="toggle-label"><strong>Bloquer xmlrpc.php</strong><span>WordPress XMLRPC</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="sec_block_scanners"><div class="toggle-label"><strong>Bloquer user-agents malveillants</strong><span>Scanners et bots offensifs</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="sec_limit_methods"><div class="toggle-label"><strong>Limiter les méthodes HTTP</strong><span>Autoriser seulement GET HEAD POST</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>Méthodes autorisées</label><input type="text" id="sec_allowed_methods" value="GET HEAD POST OPTIONS"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">IP Whitelist / Blacklist</div>
+      <div class="form-grid">
+        <div class="form-group"><label>IPs autorisées (whitelist)</label><textarea id="sec_allow_ips" rows="3" placeholder="127.0.0.1&#10;10.0.0.0/8&#10;192.168.1.0/24"></textarea><span class="hint">Une IP par ligne (Require ip ...)</span></div>
+        <div class="form-group"><label>IPs bloquées (blacklist)</label><textarea id="sec_deny_ips" rows="3" placeholder="1.2.3.4&#10;5.6.0.0/16"></textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_evasive</div>
+      <div class="toggle-row" onclick="toggle(this)" id="sec_evasive"><div class="toggle-label"><strong>mod_evasive activé</strong><span>Protection DDoS basique</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>DOSSiteCount</label><input type="number" id="ev_sitecount" value="50"></div>
+        <div class="form-group"><label>DOSSiteInterval</label><input type="number" id="ev_siteinterval" value="1"></div>
+        <div class="form-group"><label>DOSPageCount</label><input type="number" id="ev_pagecount" value="2"></div>
+        <div class="form-group"><label>DOSPageInterval</label><input type="number" id="ev_pageinterval" value="1"></div>
+        <div class="form-group"><label>DOSBlockingPeriod</label><input type="number" id="ev_blockperiod" value="10"></div>
+        <div class="form-group"><label>DOSEmailNotify</label><input type="text" id="ev_email" placeholder="admin@example.com"></div>
+        <div class="form-group"><label>DOSLogDir</label><input type="text" id="ev_logdir" value="/var/log/mod_evasive"></div>
+        <div class="form-group"><label>DOSWhitelist</label><input type="text" id="ev_whitelist" value="127.0.0.1"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_security2</div>
+      <div class="toggle-row" onclick="toggle(this)" id="sec_modsec"><div class="toggle-label"><strong>SecRuleEngine On</strong><span>Activer le moteur WAF</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>SecRuleEngine</label>
+          <select id="sec_modsec_mode"><option value="On">On</option><option value="DetectionOnly">DetectionOnly</option><option value="Off">Off</option></select>
+        </div>
+        <div class="form-group"><label>SecRequestBodyLimit</label><input type="number" id="sec_bodylimit" value="13107200"></div>
+        <div class="form-group"><label>SecAuditEngine</label>
+          <select id="sec_audit"><option value="RelevantOnly">RelevantOnly</option><option value="On">On</option><option value="Off">Off</option></select>
+        </div>
+        <div class="form-group"><label>SecAuditLog</label><input type="text" id="sec_auditlog" value="/var/log/apache2/modsec_audit.log"></div>
+        <div class="toggle-row" onclick="toggle(this)" id="sec_crs"><div class="toggle-label"><strong>Include OWASP CRS</strong><span>Core Rule Set v3+</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RATE LIMIT -->
+  <div class="section-panel" id="panel-ratelimit">
+    <div class="panel-header">
+      <div class="panel-title">Rate Limiting</div>
+      <div class="panel-desc">mod_ratelimit, mod_qos, mod_evasive bandwidth</div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_ratelimit (bande passante)</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="rl_enabled"><div class="toggle-label"><strong>SetOutputFilter RATE_LIMIT</strong><span>Limiter la vitesse de transfert</span></div><div class="toggle-switch"></div></div>
+      <div class="form-group" style="margin-top:.75rem;"><label>BandwidthRate (kB/s)</label><input type="number" id="rl_bwrate" value="500" placeholder="500 kB/s"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_qos — Quality of Service</div>
+      <div class="toggle-row" onclick="toggle(this)" id="qos_enabled"><div class="toggle-label"><strong>Activer mod_qos</strong><span>Contrôle de connexions simultanées</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>QS_SrvMaxConnClose</label><input type="number" id="qos_maxconn" value="80" placeholder="% de MaxRequestWorkers"></div>
+        <div class="form-group"><label>QS_SrvMinDataRate</label><input type="text" id="qos_mindatarate" value="150 1200" placeholder="min max (bytes/s)"></div>
+        <div class="form-group"><label>QS_SrvRequestRate</label><input type="number" id="qos_reqrate" value="200" placeholder="req/s max"></div>
+        <div class="form-group"><label>QS_ClientEventBlockCount</label><input type="number" id="qos_blockcount" value="100" placeholder="événements max"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <div class="section-panel" id="panel-auth">
+    <div class="panel-header">
+      <div class="panel-title">Auth & Access Control</div>
+      <div class="panel-desc">mod_auth_basic, mod_authz_host, LDAP, Digest</div>
+    </div>
+    <div class="card">
+      <div class="card-title">HTTP Basic Auth</div>
+      <div class="toggle-row" onclick="toggle(this)" id="auth_basic"><div class="toggle-label"><strong>Basic Auth</strong><span>AuthType Basic + .htpasswd</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>AuthName (Realm)</label><input type="text" id="auth_realm" value="Restricted Area"></div>
+        <div class="form-group"><label>AuthUserFile</label><input type="text" id="auth_userfile" value="/etc/apache2/.htpasswd"></div>
+        <div class="form-group"><label>AuthGroupFile</label><input type="text" id="auth_groupfile" placeholder="/etc/apache2/.htgroup (facultatif)"></div>
+        <div class="form-group"><label>Require</label>
+          <select id="auth_require"><option value="valid-user">valid-user</option><option value="user admin">user admin</option><option value="group admins">group admins</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">LDAP Auth (mod_authnz_ldap)</div>
+      <div class="toggle-row" onclick="toggle(this)" id="auth_ldap"><div class="toggle-label"><strong>LDAP Authentication</strong><span>mod_authnz_ldap</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>AuthLDAPURL</label><input type="text" id="ldap_url" placeholder="ldap://ldap.example.com/dc=example,dc=com?uid"></div>
+        <div class="form-group"><label>AuthLDAPBindDN</label><input type="text" id="ldap_binddn" placeholder="cn=admin,dc=example,dc=com"></div>
+        <div class="form-group"><label>AuthLDAPBindPassword</label><input type="password" id="ldap_bindpw" placeholder="motdepasse"></div>
+        <div class="form-group"><label>AuthLDAPGroupAttribute</label><input type="text" id="ldap_groupattr" value="member"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Digest Auth</div>
+      <div class="toggle-row" onclick="toggle(this)" id="auth_digest"><div class="toggle-label"><strong>Digest Authentication</strong><span>mod_auth_digest (plus sécurisé que Basic)</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>AuthDigestDomain</label><input type="text" id="digest_domain" value="/" placeholder="/"></div>
+        <div class="form-group"><label>AuthDigestFile</label><input type="text" id="digest_file" value="/etc/apache2/.htdigest"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPRESSION -->
+  <div class="section-panel" id="panel-compression">
+    <div class="panel-header">
+      <div class="panel-title">Compression</div>
+      <div class="panel-desc">mod_deflate (gzip) et mod_brotli</div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_deflate (gzip)</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="gz_enabled"><div class="toggle-label"><strong>Activer mod_deflate</strong><span>Compression gzip des réponses</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>DeflateCompressionLevel</label>
+          <select id="gz_level"><option value="1">1 (rapide)</option><option value="3">3</option><option value="6" selected>6 (recommandé)</option><option value="9">9 (max)</option></select>
+        </div>
+        <div class="form-group"><label>DeflateMemLevel</label><input type="number" id="gz_memlevel" value="9"></div>
+        <div class="form-group"><label>DeflateWindowSize</label><input type="number" id="gz_windowsize" value="15"></div>
+        <div class="form-group"><label>DeflateBufferSize</label><input type="number" id="gz_buffersize" value="8096"></div>
+        <div class="form-group span-2"><label>Types MIME compressés</label>
+          <input type="text" id="gz_types" value="text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml image/svg+xml">
+        </div>
+        <div class="toggle-row" onclick="toggle(this)" id="gz_vary"><div class="toggle-label"><strong>Header append Vary Accept-Encoding</strong><span>Correct cache CDN</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="gz_note"><div class="toggle-label"><strong>DeflateFilterNote</strong><span>Log du ratio de compression</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_brotli</div>
+      <div class="toggle-row" onclick="toggle(this)" id="br_enabled"><div class="toggle-label"><strong>Activer mod_brotli</strong><span>Compression Brotli</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>BrotliCompressionQuality</label>
+          <select id="br_quality"><option value="4">4</option><option value="6" selected>6</option><option value="9">9</option><option value="11">11 (max)</option></select>
+        </div>
+        <div class="form-group"><label>BrotliCompressionWindow</label>
+          <select id="br_window"><option value="18">18 (256KB)</option><option value="22">22 (4MB)</option><option value="24">24 (max)</option></select>
+        </div>
+        <div class="form-group span-2"><label>Types MIME Brotli</label>
+          <input type="text" id="br_types" value="text/html text/plain text/css application/javascript application/json image/svg+xml">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPIRES -->
+  <div class="section-panel" id="panel-expires">
+    <div class="panel-header">
+      <div class="panel-title">mod_expires</div>
+      <div class="panel-desc">Cache navigateur — Expires et Cache-Control</div>
+    </div>
+    <div class="card">
+      <div class="card-title">ExpiresActive & Règles</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="exp_active"><div class="toggle-label"><strong>ExpiresActive On</strong><span>Activer les en-têtes Expires</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>ExpiresByType — Images (jpg,png,gif,webp,avif)</label><input type="text" id="exp_img" value="access plus 30 days"></div>
+        <div class="form-group"><label>ExpiresByType — CSS</label><input type="text" id="exp_css" value="access plus 7 days"></div>
+        <div class="form-group"><label>ExpiresByType — JavaScript</label><input type="text" id="exp_js" value="access plus 7 days"></div>
+        <div class="form-group"><label>ExpiresByType — Fonts (woff, woff2)</label><input type="text" id="exp_font" value="access plus 1 year"></div>
+        <div class="form-group"><label>ExpiresByType — text/html</label><input type="text" id="exp_html" value="access plus 1 hour"></div>
+        <div class="form-group"><label>ExpiresByType — application/json</label><input type="text" id="exp_json" value="access plus 1 day"></div>
+        <div class="form-group"><label>ExpiresByType — PDF</label><input type="text" id="exp_pdf" value="access plus 7 days"></div>
+        <div class="form-group"><label>ExpiresDefault</label><input type="text" id="exp_default" value="access plus 2 days"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REWRITE -->
+  <div class="section-panel" id="panel-rewrite">
+    <div class="panel-header">
+      <div class="panel-title">mod_rewrite</div>
+      <div class="panel-desc">RewriteRule, RewriteCond, RewriteMap</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Règles RewriteRule</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="rw_engine"><div class="toggle-label"><strong>RewriteEngine On</strong><span>Activer le moteur de réécriture</span></div><div class="toggle-switch"></div></div>
+      <div class="form-group" style="margin-top:.75rem;"><label>RewriteBase</label><input type="text" id="rw_base" value="/"></div>
+      <div id="rewrite-rules" class="entry-list" style="margin-top:.75rem;">
+        <div class="entry-item" style="grid-template-columns:1fr 1fr auto auto;">
+          <input type="text" value="^/old-page$" placeholder="Regex source">
+          <input type="text" value="/new-page" placeholder="Substitution">
+          <input type="text" value="[R=301,L]" placeholder="Flags" style="max-width:100px;">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+        <div class="entry-item" style="grid-template-columns:1fr 1fr auto auto;">
+          <input type="text" value="^(.*)$" placeholder="Regex source">
+          <input type="text" value="/index.php?q=$1" placeholder="Substitution">
+          <input type="text" value="[L,QSA]" placeholder="Flags" style="max-width:100px;">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addRewrite()">+ Ajouter une règle</button>
+    </div>
+    <div class="card">
+      <div class="card-title">RewriteCond (conditions)</div>
+      <div id="rewrite-conds" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:1fr 1fr auto auto;">
+          <input type="text" value="%{HTTPS}" placeholder="%{Variable}">
+          <input type="text" value="!=on" placeholder="Pattern">
+          <input type="text" value="" placeholder="Flags [NC,OR]" style="max-width:100px;">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addRewriteCond()">+ Ajouter une condition</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Recettes courantes</div>
+      <div class="form-grid">
+        <div class="toggle-row" onclick="toggle(this)" id="rw_force_https"><div class="toggle-label"><strong>Forcer HTTPS</strong><span>RewriteCond HTTPS off → 301</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="rw_force_www"><div class="toggle-label"><strong>Forcer www</strong><span>non-www → www redirect</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="rw_remove_www"><div class="toggle-label"><strong>Supprimer www</strong><span>www → non-www redirect</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="rw_slash"><div class="toggle-label"><strong>Trailing slash</strong><span>Ajouter / en fin d'URL répertoire</span></div><div class="toggle-switch"></div></div>
+        <div class="toggle-row" onclick="toggle(this)" id="rw_clean_url"><div class="toggle-label"><strong>Clean URLs (CMS)</strong><span>Front controller pattern</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHP-FPM -->
+  <div class="section-panel" id="panel-php">
+    <div class="panel-header">
+      <div class="panel-title">PHP-FPM / CGI / WSGI</div>
+      <div class="panel-desc">Configuration PHP via mod_proxy_fcgi ou mod_cgi</div>
+    </div>
+    <div class="card">
+      <div class="card-title">PHP-FPM (mod_proxy_fcgi)</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="php_fpm"><div class="toggle-label"><strong>PHP-FPM via socket Unix</strong><span>mod_proxy_fcgi — méthode recommandée</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>PHP-FPM socket</label><input type="text" id="php_socket" value="unix:/run/php/php8.2-fpm.sock|fcgi://localhost"></div>
+        <div class="form-group"><label>PHP version</label>
+          <select id="php_version">
+            <option value="8.2">8.2</option><option value="8.1">8.1</option><option value="8.0">8.0</option>
+            <option value="7.4">7.4 (legacy)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>SetHandler</label><input type="text" id="php_handler" value="proxy:unix:/run/php/php8.2-fpm.sock|fcgi://localhost"></div>
+        <div class="form-group"><label>FCGIPassHeader</label><input type="text" id="php_fcgi_header" value="Authorization"></div>
+        <div class="toggle-row" onclick="toggle(this)" id="php_status"><div class="toggle-label"><strong>PHP-FPM Status page</strong><span>/fpm-status, /fpm-ping</span></div><div class="toggle-switch"></div></div>
+        <div class="form-group"><label>ProxyPassMatch (pattern)</label><input type="text" id="php_pattern" value="^/(.*\.php(/.*)?)$"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_cgi / mod_cgid (Python, Perl, Shell)</div>
+      <div class="toggle-row" onclick="toggle(this)" id="php_cgi"><div class="toggle-label"><strong>mod_cgid activé</strong><span>CGI classique — MPM threaded</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>ScriptAlias /cgi-bin/</label><input type="text" id="cgi_path" value="/usr/lib/cgi-bin/"></div>
+        <div class="form-group"><label>Options ExecCGI</label>
+          <select id="cgi_opts"><option value="+ExecCGI">+ExecCGI</option><option value="+ExecCGI +FollowSymLinks">+ExecCGI +FollowSymLinks</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">WSGI (Python — mod_wsgi)</div>
+      <div class="toggle-row" onclick="toggle(this)" id="php_wsgi"><div class="toggle-label"><strong>mod_wsgi activé</strong><span>Applications Python (Django, Flask)</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>WSGIScriptAlias /</label><input type="text" id="wsgi_script" placeholder="/var/www/myapp/myapp.wsgi"></div>
+        <div class="form-group"><label>WSGIPythonHome</label><input type="text" id="wsgi_pythonhome" placeholder="/usr/local/bin/python3"></div>
+        <div class="form-group"><label>WSGIDaemonProcess</label><input type="text" id="wsgi_daemon" value="myapp user=www-data group=www-data threads=5"></div>
+        <div class="form-group"><label>WSGIProcessGroup</label><input type="text" id="wsgi_group" value="myapp"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENV VARS -->
+  <div class="section-panel" id="panel-envvars">
+    <div class="panel-header">
+      <div class="panel-title">Variables d'environnement</div>
+      <div class="panel-desc">SetEnv, PassEnv, SetEnvIf</div>
+    </div>
+    <div class="card">
+      <div class="card-title">SetEnv / PassEnv</div>
+      <div id="envvars-list" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:auto 1fr 1fr auto;">
+          <select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>SetEnv</option><option>PassEnv</option><option>UnsetEnv</option></select>
+          <input type="text" value="APP_ENV" placeholder="Variable">
+          <input type="text" value="production" placeholder="Valeur">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addEnvVar()">+ Ajouter une variable</button>
+    </div>
+    <div class="card">
+      <div class="card-title">SetEnvIf (conditionnel)</div>
+      <div id="setenvif-list" class="entry-list">
+        <div class="entry-item" style="grid-template-columns:1fr 1fr 1fr auto;">
+          <input type="text" value="Request_URI" placeholder="Attribut">
+          <input type="text" value="\.gif$" placeholder="Regex">
+          <input type="text" value="is_image=yes" placeholder="Variable=valeur">
+          <button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addSetEnvIf()">+ Ajouter un SetEnvIf</button>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="section-panel" id="panel-status">
+    <div class="panel-header">
+      <div class="panel-title">mod_status & mod_info</div>
+      <div class="panel-desc">Pages de monitoring Apache</div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_status</div>
+      <div class="toggle-row on" onclick="toggle(this)" id="st_status"><div class="toggle-label"><strong>mod_status activé</strong><span>/server-status</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>Location</label><input type="text" id="st_location" value="/server-status"></div>
+        <div class="form-group"><label>Restreindre à</label><input type="text" id="st_allow" value="127.0.0.1 ::1"></div>
+        <div class="toggle-row on" onclick="toggle(this)" id="st_extended"><div class="toggle-label"><strong>ExtendedStatus On</strong><span>Statistiques détaillées</span></div><div class="toggle-switch"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">mod_info</div>
+      <div class="toggle-row" onclick="toggle(this)" id="st_info"><div class="toggle-label"><strong>mod_info activé</strong><span>/server-info (attention : expose la config)</span></div><div class="toggle-switch"></div></div>
+      <div class="form-grid" style="margin-top:.75rem;">
+        <div class="form-group"><label>Location</label><input type="text" id="info_location" value="/server-info"></div>
+        <div class="form-group"><label>Restreindre à</label><input type="text" id="info_allow" value="127.0.0.1"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- OUTPUT -->
+<aside class="output-panel">
+  <div class="output-header">
+    <span class="output-title">apache2.conf — Généré</span>
+    <span id="line-count" class="badge badge-blue">0 lignes</span>
+  </div>
+  <div class="output-tabs">
+    <div class="output-tab active" onclick="switchTab('main','apache2.conf')">apache2.conf</div>
+    <div class="output-tab" onclick="switchTab('vhost','vhost.conf')">vhost.conf</div>
+    <div class="output-tab" onclick="switchTab('ssl','ssl.conf')">ssl.conf</div>
+    <div class="output-tab" onclick="switchTab('htaccess','.htaccess')">.htaccess</div>
+    <div class="output-tab" onclick="switchTab('security','security.conf')">security.conf</div>
+  </div>
+  <div class="output-code" id="output-code">
+    <pre id="output-pre"></pre>
+  </div>
+  <div class="status-bar">
+    <div class="status-dot"></div>
+    <span id="status-text">Configuration valide</span>
+  </div>
+  <div class="output-actions">
+    <button class="btn btn-primary" onclick="copyConfig()">Copier</button>
+    <button class="btn btn-secondary" onclick="downloadConfig()">Télécharger</button>
+    <button class="btn btn-secondary" onclick="updateGen()">Régénérer</button>
+  </div>
+</aside>
+</div>
+
+<div class="copy-flash" id="copy-flash">✓ Copié dans le presse-papier</div>
+
+<script>
+let activeTab = 'main', activeFilename = 'apache2.conf';
+
+function toggle(el){ el.classList.toggle('on'); updateGen(); }
+function isOn(id){ const e=document.getElementById(id); return e?e.classList.contains('on'):false; }
+function v(id,fb=''){ const e=document.getElementById(id); return e?(e.value||fb):fb; }
+
+function show(name){
+  document.querySelectorAll('.section-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  const p=document.getElementById('panel-'+name);
+  if(p) p.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(i=>{if(i.getAttribute('data-s')===name)i.classList.add('active');});
+  updateGen();
+}
+
+function switchTab(tab,fname){
+  activeTab=tab; activeFilename=fname||tab;
+  document.querySelectorAll('.output-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  updateGen();
+}
+
+function removeEntry(el){ (el.closest('.entry-item')||el.parentElement).remove(); updateGen(); }
+
+function addErrorDoc(){
+  const l=document.getElementById('errordocs');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='80px 1fr auto';
+  i.innerHTML=`<input type="text" value="403" placeholder="Code"><input type="text" value="/errors/403.html" placeholder="URI"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addAlias(){
+  const l=document.getElementById('aliases');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='auto 1fr 1fr auto';
+  i.innerHTML=`<select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>Alias</option><option>ScriptAlias</option><option>AliasMatch</option></select><input type="text" value="/assets/" placeholder="/url/"><input type="text" value="/var/www/assets/" placeholder="/path/"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addDirBlock(){
+  const c=document.getElementById('dir-blocks');
+  const d=document.createElement('div'); d.className='directive-block';
+  d.innerHTML=`<div class="directive-header"><span style="font-family:var(--font-mono);font-size:12px;color:var(--blue-300)">&lt;Nouveau bloc&gt;</span><button class="btn btn-danger btn-sm" onclick="this.closest('.directive-block').remove();updateGen()">✕</button></div><div class="form-grid"><div class="form-group"><label>Path</label><input type="text" value="/var/www/example.com/uploads" oninput="updateGen()"></div><div class="form-group"><label>Type</label><select onchange="updateGen()"><option>Directory</option><option>Files</option><option>FilesMatch</option><option>Location</option></select></div><div class="form-group"><label>Options</label><input type="text" value="-ExecCGI" oninput="updateGen()"></div><div class="form-group"><label>AllowOverride</label><select onchange="updateGen()"><option>None</option><option>All</option><option>FileInfo</option></select></div><div class="form-group"><label>Require</label><select onchange="updateGen()"><option value="all granted">all granted</option><option value="all denied">all denied</option></select></div></div>`;
+  c.appendChild(d); updateGen();
+}
+
+function addProxyRule(){
+  const l=document.getElementById('proxy-rules');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='1fr 1fr auto auto';
+  i.innerHTML=`<input type="text" value="/" placeholder="URL path"><input type="text" value="http://localhost:8080/" placeholder="Backend"><select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>ProxyPass</option><option>ProxyPassMatch</option></select><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addBalancerMember(btn, id){
+  const l=document.getElementById('bm-'+id)||btn.previousElementSibling;
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='1fr 60px 80px auto auto';
+  i.innerHTML=`<input type="text" value="http://10.0.0.3:8080"><input type="number" value="1"><input type="text" value="" placeholder="route"><select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:11px;padding:0 4px;"><option>—</option><option>status=+H</option></select><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  if(l) l.appendChild(i); updateGen();
+}
+
+function addBalancer(){
+  const c=document.getElementById('balancers-container');
+  const idx=Date.now();
+  const card=document.createElement('div'); card.className='card'; card.setAttribute('data-balancer',idx);
+  card.innerHTML=`<div class="card-title">Groupe balancer <button class="btn btn-danger btn-sm" onclick="this.closest('.card').remove();updateGen()" style="margin-left:auto">✕</button></div><div class="form-grid"><div class="form-group"><label>Nom</label><input type="text" value="cluster${idx%100}" oninput="updateGen()"></div><div class="form-group"><label>lbmethod</label><select onchange="updateGen()"><option value="byrequests">byrequests</option><option value="bytraffic">bytraffic</option><option value="bybusyness">bybusyness</option></select></div><div class="form-group"><label>stickysession</label><input type="text" value="" oninput="updateGen()"></div></div><div style="margin-top:.75rem;"><div class="entry-list" id="bm-${idx}"><div class="entry-item" style="grid-template-columns:1fr 60px 80px auto auto;"><input type="text" value="http://127.0.0.1:8080"><input type="number" value="1"><input type="text" value="" placeholder="route"><select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:11px;padding:0 4px;"><option>—</option><option>status=+H</option></select><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button></div></div><button class="btn-add" onclick="addBalancerMember(this,'${idx}')">+ Ajouter un membre</button></div><div class="form-group" style="margin-top:.75rem;"><label>ProxyPass route</label><input type="text" value="/" oninput="updateGen()"></div>`;
+  c.appendChild(card); updateGen();
+}
+
+function addCustomHeader(){
+  const l=document.getElementById('custom-headers');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='auto 1fr 1fr auto';
+  i.innerHTML=`<select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>Header always set</option><option>Header set</option><option>Header always unset</option></select><input type="text" placeholder="Header-Name"><input type="text" placeholder="Value"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addRewrite(){
+  const l=document.getElementById('rewrite-rules');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='1fr 1fr auto auto';
+  i.innerHTML=`<input type="text" value="^/(.+)$" placeholder="Regex"><input type="text" value="/$1" placeholder="Substitution"><input type="text" value="[L]" placeholder="Flags" style="max-width:100px;"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addRewriteCond(){
+  const l=document.getElementById('rewrite-conds');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='1fr 1fr auto auto';
+  i.innerHTML=`<input type="text" value="%{REQUEST_URI}" placeholder="%{Variable}"><input type="text" value="!^/api" placeholder="Pattern"><input type="text" value="[NC]" placeholder="Flags" style="max-width:100px;"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addHtaRedirect(){
+  const l=document.getElementById('hta-redirects');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='auto 1fr 1fr auto';
+  i.innerHTML=`<select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>Redirect 301</option><option>Redirect 302</option><option>RedirectMatch 301</option></select><input type="text" value="/page" placeholder="URL source"><input type="text" value="https://example.com/page" placeholder="URL dest"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addEnvVar(){
+  const l=document.getElementById('envvars-list');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='auto 1fr 1fr auto';
+  i.innerHTML=`<select style="background:var(--input-bg);border:none;color:var(--text-secondary);font-size:12px;padding:0 6px;"><option>SetEnv</option><option>PassEnv</option><option>UnsetEnv</option></select><input type="text" placeholder="VAR_NAME"><input type="text" placeholder="valeur"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function addSetEnvIf(){
+  const l=document.getElementById('setenvif-list');
+  const i=document.createElement('div'); i.className='entry-item'; i.style.gridTemplateColumns='1fr 1fr 1fr auto';
+  i.innerHTML=`<input type="text" value="User-Agent" placeholder="Attribut"><input type="text" value="bot" placeholder="Regex"><input type="text" value="is_bot=yes" placeholder="Variable=val"><button class="btn btn-danger btn-sm" onclick="removeEntry(this)">✕</button>`;
+  l.appendChild(i); updateGen();
+}
+
+function applyLogPreset(){
+  const presets={
+    combined:'"%h %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\""',
+    common:'"%h %l %u %t \\"%r\\" %>s %b"',
+    vhost_combined:'"%v:%p %h %l %u %t \\"%r\\" %>s %b \\"%{Referer}i\\" \\"%{User-Agent}i\\""',
+    json:'"{\\"time\\":\\"%{%Y-%m-%dT%H:%M:%S}t\\",\\"remote_addr\\":\\"%h\\",\\"method\\":\\"%m\\",\\"uri\\":\\"%U\\",\\"status\\":%>s,\\"bytes\\":%b,\\"referer\\":\\"%{Referer}i\\",\\"ua\\":\\"%{User-Agent}i\\"}"',
+    custom: document.getElementById('log_format_str').value
+  };
+  const s=document.getElementById('log_format_preset').value;
+  if(s!=='custom') document.getElementById('log_format_str').value=presets[s]||'';
+  updateGen();
+}
+
+function applySSLCipherPreset(){
+  const c={
+    modern:'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256',
+    intermediate:'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384',
+    old:'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA:AES256-SHA:DES-CBC3-SHA',
+    custom:document.getElementById('ssl_ciphers').value
+  };
+  const s=document.getElementById('ssl_cipher_preset').value;
+  if(s!=='custom') document.getElementById('ssl_ciphers').value=c[s]||'';
+  updateGen();
+}
+
+// ── GENERATORS ──
+
+function genMain(){
+  const L=[]; const l=(s)=>L.push(s);
+  l('# apache2.conf — Généré par OCASDEV Apache2 Generator');
+  l('# https://ocasdev.com | AS216190');
+  l(`# ${new Date().toISOString()}`);
+  l('');
+  l(`ServerRoot "${v('g_serverroot','/etc/apache2')}"`);
+  l(`User ${v('g_user','www-data')}`);
+  l(`Group ${v('g_group','www-data')}`);
+  l(`PidFile ${v('g_pidfile','${APACHE_PID_FILE}')}`);
+  l(`ServerName ${v('g_servername','example.com')}`);
+  l(`ServerAdmin ${v('g_serveradmin','admin@example.com')}`);
+  l(`DocumentRoot "${v('g_docroot','/var/www/html')}"`);
+  if(v('g_defaulttype')) l(`DefaultType ${v('g_defaulttype','none')}`);
+  l('');
+  if(isOn('g_servertokens')) l('ServerTokens Prod');
+  if(isOn('g_serversign')) l('ServerSignature Off');
+  if(isOn('g_etag')) l('FileETag None');
+  if(isOn('g_traceenable')) l('TraceEnable Off');
+  l('');
+  l(`Timeout ${v('g_timeout','300')}`);
+  l(`KeepAlive ${isOn('g_keepalive')?'On':'Off'}`);
+  if(isOn('g_keepalive')){
+    l(`MaxKeepAliveRequests ${v('g_maxka','100')}`);
+    l(`KeepAliveTimeout ${v('g_katimeout','5')}`);
+  }
+  l('');
+  l(`LimitRequestBody ${v('g_limitbody','10485760')}`);
+  l(`LimitRequestFields ${v('g_limitfields','100')}`);
+  l(`LimitRequestFieldSize ${v('g_limitfieldsize','8190')}`);
+  l(`LimitRequestLine ${v('g_limitline','8190')}`);
+  l('');
+
+  // MPM
+  const mpm=document.getElementById('mpm_type')?document.getElementById('mpm_type').value:'event';
+  l(`# MPM — ${mpm}`);
+  l(`<IfModule mpm_${mpm}_module>`);
+  if(mpm==='prefork'){
+    l(`    StartServers             ${v('pf_startservers','5')}`);
+    l(`    MinSpareServers          ${v('pf_minspare','5')}`);
+    l(`    MaxSpareServers          ${v('pf_maxspare','10')}`);
+    l(`    MaxRequestWorkers        ${v('pf_maxworkers','150')}`);
+    l(`    MaxConnectionsPerChild   ${v('pf_maxconn','0')}`);
+  } else {
+    l(`    StartServers             ${v('mpm_startservers','2')}`);
+    l(`    MinSpareThreads          ${v('mpm_minsparethreads','25')}`);
+    l(`    MaxSpareThreads          ${v('mpm_maxsparethreads','75')}`);
+    l(`    ThreadLimit              ${v('mpm_threadlimit','64')}`);
+    l(`    ThreadsPerChild          ${v('mpm_threadsperchild','25')}`);
+    l(`    MaxRequestWorkers        ${v('mpm_maxrequestworkers','150')}`);
+    l(`    MaxConnectionsPerChild   ${v('mpm_maxconnperchild','0')}`);
+    if(mpm==='event') l(`    AsyncRequestWorkerFactor ${v('mpm_asyncfactor','2')}`);
+  }
+  l(`</IfModule>`);
+  l('');
+
+  // Modules
+  const modMap=[
+    ['mod_rewrite','mod_rewrite'],['mod_ssl','mod_ssl'],['mod_headers','mod_headers'],
+    ['mod_deflate','mod_deflate'],['mod_expires','mod_expires'],['mod_proxy','mod_proxy'],
+    ['mod_proxy_http','mod_proxy_http'],['mod_proxy_fcgi','mod_proxy_fcgi'],
+    ['mod_http2','http2'],['mod_security2','security2'],['mod_ratelimit','ratelimit'],
+    ['mod_evasive','evasive'],['mod_cache','cache'],['mod_cache_disk','cache_disk'],
+    ['mod_brotli','brotli'],['mod_remoteip','remoteip'],['mod_status','status'],
+    ['mod_info','info'],['mod_autoindex','autoindex'],['mod_dir','dir'],
+    ['mod_alias','alias'],['mod_env','env'],['mod_setenvif','setenvif']
+  ];
+  l('# Modules actifs (a2enmod)');
+  modMap.forEach(([id,name])=>{ if(isOn(id)) l(`LoadModule ${name}_module modules/mod_${name}.so`); });
+  l('');
+
+  // Logging
+  l(`# Logs`);
+  l(`ErrorLog ${v('log_errorlog','${APACHE_LOG_DIR}/error.log')}`);
+  l(`LogLevel ${v('log_loglevel','warn')}`);
+  l(`LogFormat ${v('log_format_str','"%h %l %u %t \\"%r\\" %>s %b"')} ${v('log_format_name','combined')}`);
+  l(`CustomLog ${v('log_customlog','${APACHE_LOG_DIR}/access.log')} ${v('log_format_name','combined')}`);
+  l('');
+
+  // RemoteIP
+  if(isOn('p_remoteip')){
+    l('<IfModule mod_remoteip.c>');
+    l(`    RemoteIPHeader X-Forwarded-For`);
+    v('p_trusted_proxy','127.0.0.1 ::1').split(/\s+/).forEach(ip=>{ if(ip) l(`    RemoteIPTrustedProxy ${ip}`); });
+    l('</IfModule>');
+    l('');
+  }
+
+  // ExtendedStatus
+  if(isOn('st_extended')) l('ExtendedStatus On');
+
+  // HTTP/2 global
+  if(isOn('mod_http2')){
+    l('');
+    l('<IfModule mod_http2.c>');
+    l('    Protocols h2 h2c http/1.1');
+    l('</IfModule>');
+  }
+
+  l('');
+  l('# Inclure les configs supplémentaires');
+  l('IncludeOptional conf-enabled/*.conf');
+  l('IncludeOptional sites-enabled/*.conf');
+
+  return L.join('\n');
+}
+
+function genVhost(){
+  const L=[]; const l=(s)=>L.push(s);
+  l(`# /etc/apache2/sites-available/${v('vh_servername','example.com')}.conf`);
+  l(`# a2ensite ${v('vh_servername','example.com')} && systemctl reload apache2`);
+  l('');
+
+  if(isOn('vh_redirect_https')){
+    l(`# ── Redirection HTTP → HTTPS ──`);
+    l(`<VirtualHost *:${v('vh_port_http','80')}>`);
+    l(`    ServerName ${v('vh_servername','example.com')}`);
+    if(v('vh_serveralias')) l(`    ServerAlias ${v('vh_serveralias','www.example.com')}`);
+    l(`    Redirect permanent / https://${v('vh_servername','example.com')}/`);
+    l(`    ErrorLog \${APACHE_LOG_DIR}/${v('vh_servername','example.com')}_error.log`);
+    l(`</VirtualHost>`);
+    l('');
+  }
+
+  l(`# ── VirtualHost HTTPS ──`);
+  l(`<VirtualHost *:${v('vh_port_https','443')}>`);
+  l(`    ServerName ${v('vh_servername','example.com')}`);
+  if(v('vh_serveralias')) l(`    ServerAlias ${v('vh_serveralias','')}`);
+  l(`    ServerAdmin ${v('vh_serveradmin','admin@example.com')}`);
+  l(`    DocumentRoot "${v('vh_docroot','/var/www/example.com/public')}"`);
+  l('');
+  l(`    DirectoryIndex ${v('vh_dirindex','index.html index.php')}`);
+  if(isOn('ssl_http2')) l(`    Protocols h2 http/1.1`);
+  l('');
+
+  // SSL inside vhost
+  l(`    # SSL`);
+  l(`    SSLEngine on`);
+  l(`    SSLCertificateFile      ${v('ssl_cert','/etc/ssl/certs/example.com.crt')}`);
+  l(`    SSLCertificateKeyFile   ${v('ssl_key','/etc/ssl/private/example.com.key')}`);
+  if(v('ssl_chain')) l(`    SSLCertificateChainFile ${v('ssl_chain')}`);
+  l('');
+
+  // Security headers
+  l(`    # Security Headers`);
+  if(isOn('h_hsts')) l(`    Header always set Strict-Transport-Security "max-age=${v('h_hsts_age','31536000; includeSubDomains; preload')}"`);
+  if(isOn('h_xframe')) l(`    Header always set X-Frame-Options "${document.getElementById('h_xframe_val')?document.getElementById('h_xframe_val').value:'DENY'}"`);
+  if(isOn('h_xctype')) l(`    Header always set X-Content-Type-Options "nosniff"`);
+  if(isOn('h_xxss')) l(`    Header always set X-XSS-Protection "1; mode=block"`);
+  if(isOn('h_referrer')) l(`    Header always set Referrer-Policy "strict-origin-when-cross-origin"`);
+  if(isOn('h_permissions')) l(`    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"`);
+  if(isOn('h_csp')) l(`    Header always set Content-Security-Policy "${v('h_csp_val',"default-src 'self'").replace(/\n/g,' ')}"`);
+  l('');
+
+  // CORS
+  if(isOn('h_cors')){
+    l(`    # CORS`);
+    l(`    Header always set Access-Control-Allow-Origin "${v('h_cors_origin','*')}"`);
+    l(`    Header always set Access-Control-Allow-Methods "${v('h_cors_methods','GET, POST, OPTIONS')}"`);
+    l(`    Header always set Access-Control-Allow-Headers "${v('h_cors_headers','Authorization, Content-Type')}"`);
+    l(`    Header always set Access-Control-Max-Age "${v('h_cors_age','86400')}"`);
+    l('');
+  }
+
+  // Custom headers
+  document.querySelectorAll('#custom-headers .entry-item').forEach(item=>{
+    const sel=item.querySelector('select');
+    const inputs=item.querySelectorAll('input');
+    if(inputs[0]&&inputs[0].value){
+      const hname=inputs[0].value, hval=inputs[1]?inputs[1].value:'';
+      const directive=sel?sel.value:'Header always set';
+      if(hval) l(`    ${directive} ${hname} "${hval}"`);
+      else l(`    Header always unset ${hname}`);
+    }
+  });
+
+  // Compression
+  if(isOn('gz_enabled')){
+    l('    # Compression gzip');
+    l('    <IfModule mod_deflate.c>');
+    l(`        DeflateCompressionLevel ${v('gz_level','6')}`);
+    v('gz_types','text/html text/plain text/css application/javascript application/json').split(' ').forEach(t=>{
+      if(t) l(`        AddOutputFilterByType DEFLATE ${t}`);
+    });
+    if(isOn('gz_vary')) l(`        Header append Vary Accept-Encoding`);
+    l('    </IfModule>');
+    l('');
+  }
+
+  if(isOn('br_enabled')){
+    l('    # Compression Brotli');
+    l('    <IfModule mod_brotli.c>');
+    l(`        BrotliCompressionQuality ${v('br_quality','6')}`);
+    v('br_types','text/html text/css application/javascript application/json image/svg+xml').split(' ').forEach(t=>{
+      if(t) l(`        AddOutputFilterByType BROTLI_COMPRESS ${t}`);
+    });
+    l('    </IfModule>');
+    l('');
+  }
+
+  // Expires
+  if(isOn('exp_active')){
+    l('    # mod_expires — cache navigateur');
+    l('    <IfModule mod_expires.c>');
+    l('        ExpiresActive On');
+    l(`        ExpiresByType image/jpeg "access plus ${v('exp_img','30 days')}"`);
+    l(`        ExpiresByType image/png "access plus ${v('exp_img','30 days')}"`);
+    l(`        ExpiresByType image/gif "access plus ${v('exp_img','30 days')}"`);
+    l(`        ExpiresByType image/webp "access plus ${v('exp_img','30 days')}"`);
+    l(`        ExpiresByType image/avif "access plus ${v('exp_img','30 days')}"`);
+    l(`        ExpiresByType text/css "access plus ${v('exp_css','7 days')}"`);
+    l(`        ExpiresByType application/javascript "access plus ${v('exp_js','7 days')}"`);
+    l(`        ExpiresByType font/woff2 "access plus ${v('exp_font','1 year')}"`);
+    l(`        ExpiresByType font/woff "access plus ${v('exp_font','1 year')}"`);
+    l(`        ExpiresByType text/html "access plus ${v('exp_html','1 hour')}"`);
+    l(`        ExpiresByType application/json "access plus ${v('exp_json','1 day')}"`);
+    l(`        ExpiresByType application/pdf "access plus ${v('exp_pdf','7 days')}"`);
+    l(`        ExpiresDefault "access plus ${v('exp_default','2 days')}"`);
+    l('    </IfModule>');
+    l('');
+  }
+
+  // PHP-FPM
+  if(isOn('php_fpm')){
+    l(`    # PHP-FPM via mod_proxy_fcgi`);
+    l(`    <FilesMatch \\.php$>`);
+    l(`        SetHandler "${v('php_handler','proxy:unix:/run/php/php8.2-fpm.sock|fcgi://localhost')}"`);
+    l(`    </FilesMatch>`);
+    if(v('php_pattern')&&v('php_socket')){
+      l(`    ProxyPassMatch ${v('php_pattern','^/(.*\\.php(/.*)?)$')} ${v('php_socket','unix:/run/php/php8.2-fpm.sock|fcgi://localhost')}`);
+    }
+    if(isOn('php_status')){
+      l('');
+      l(`    <LocationMatch "^/(fpm-status|fpm-ping)$">`);
+      l(`        ProxyPass "fcgi://localhost/status"`);
+      l(`        Require ip 127.0.0.1 ::1`);
+      l(`    </LocationMatch>`);
+    }
+    l('');
+  }
+
+  if(isOn('php_wsgi')){
+    l(`    # mod_wsgi`);
+    l(`    WSGIScriptAlias / ${v('wsgi_script','/var/www/app/app.wsgi')}`);
+    l(`    WSGIDaemonProcess ${v('wsgi_daemon','myapp user=www-data group=www-data threads=5')}`);
+    l(`    WSGIProcessGroup ${v('wsgi_group','myapp')}`);
+    l('');
+  }
+
+  // Auth
+  if(isOn('auth_basic')){
+    l(`    # Basic Auth`);
+    l(`    AuthType Basic`);
+    l(`    AuthName "${v('auth_realm','Restricted Area')}"`);
+    l(`    AuthUserFile ${v('auth_userfile','/etc/apache2/.htpasswd')}`);
+    if(v('auth_groupfile')) l(`    AuthGroupFile ${v('auth_groupfile')}`);
+    l(`    Require ${document.getElementById('auth_require')?document.getElementById('auth_require').value:'valid-user'}`);
+    l('');
+  }
+
+  if(isOn('auth_ldap')){
+    l(`    # LDAP Auth`);
+    l(`    AuthType Basic`);
+    l(`    AuthName "LDAP Login"`);
+    l(`    AuthBasicProvider ldap`);
+    l(`    AuthLDAPURL ${v('ldap_url','ldap://ldap.example.com/dc=example,dc=com?uid')}`);
+    if(v('ldap_binddn')) l(`    AuthLDAPBindDN "${v('ldap_binddn')}"`);
+    if(v('ldap_bindpw')) l(`    AuthLDAPBindPassword "${v('ldap_bindpw')}"`);
+    l(`    AuthLDAPGroupAttribute ${v('ldap_groupattr','member')}`);
+    l(`    Require valid-user`);
+    l('');
+  }
+
+  // Proxy pass rules
+  const proxyRules=document.querySelectorAll('#proxy-rules .entry-item');
+  if(proxyRules.length>0){
+    l(`    # Proxy rules`);
+    if(isOn('p_engine')) l(`    ProxyRequests Off`);
+    if(isOn('p_preserve_host')) l(`    ProxyPreserveHost On`);
+    if(v('p_timeout')) l(`    ProxyTimeout ${v('p_timeout','90')}`);
+    if(isOn('p_add_headers')){
+      l(`    RequestHeader set X-Forwarded-Proto "%{REQUEST_SCHEME}e" env=REQUEST_SCHEME`);
+      l(`    RequestHeader set X-Forwarded-For "%{REMOTE_ADDR}s"`);
+      l(`    RequestHeader set X-Real-IP "%{REMOTE_ADDR}s"`);
+    }
+    proxyRules.forEach(r=>{
+      const inputs=r.querySelectorAll('input');
+      const sel=r.querySelector('select');
+      if(inputs[0]&&inputs[1]&&inputs[0].value){
+        const type=sel?sel.value:'ProxyPass';
+        l(`    ${type} ${inputs[0].value} ${inputs[1].value}`);
+        if(type==='ProxyPass') l(`    ProxyPassReverse ${inputs[0].value} ${inputs[1].value}`);
+      }
+    });
+    l('');
+  }
+
+  if(isOn('p_ws')){
+    l(`    # WebSocket`);
+    l(`    <IfModule mod_proxy_wstunnel.c>`);
+    l(`        ProxyPass ${v('p_ws_path','/ws/')} ${v('p_ws_backend','ws://localhost:8080/')}`);
+    l(`        ProxyPassReverse ${v('p_ws_path','/ws/')} ${v('p_ws_backend','ws://localhost:8080/')}`);
+    l(`    </IfModule>`);
+    l('');
+  }
+
+  // Balancers
+  document.querySelectorAll('#balancers-container .card[data-balancer]').forEach(bc=>{
+    const inputs=bc.querySelectorAll('input, select');
+    const name=inputs[0]?inputs[0].value:'mycluster';
+    const method=inputs[1]?inputs[1].value:'byrequests';
+    const sticky=inputs[2]?inputs[2].value:'';
+    const route=bc.querySelector('input[placeholder="/"]');
+    l(`    # Balancer — ${name}`);
+    l(`    <Proxy "balancer://${name}">`);
+    bc.querySelectorAll('.entry-item').forEach(mem=>{
+      const mi=mem.querySelectorAll('input, select');
+      if(mi[0]&&mi[0].value){
+        let s=`        BalancerMember ${mi[0].value}`;
+        if(mi[1]&&mi[1].value&&mi[1].value!='1') s+=` loadfactor=${mi[1].value}`;
+        if(mi[2]&&mi[2].value) s+=` route=${mi[2].value}`;
+        if(mi[3]&&mi[3].value&&mi[3].value!=='—') s+=` ${mi[3].value}`;
+        l(s);
+      }
+    });
+    l(`        ProxySet lbmethod=${method}${sticky?' stickysession='+sticky:''}`);
+    l(`    </Proxy>`);
+    l(`    ProxyPass ${route?route.value:'/'} "balancer://${name}/"`);
+    l(`    ProxyPassReverse ${route?route.value:'/'} "balancer://${name}/"`);
+    l('');
+  });
+
+  // Directory blocks
+  document.querySelectorAll('#dir-blocks .directive-block').forEach(db=>{
+    const inputs=db.querySelectorAll('input, select');
+    if(inputs[0]&&inputs[0].value){
+      const path=inputs[0].value;
+      const type=inputs[1]?inputs[1].value:'Directory';
+      const opts=inputs[2]?inputs[2].value:'';
+      const ao=inputs[3]?inputs[3].value:'None';
+      const req=inputs[4]?inputs[4].value:'all granted';
+      l(`    <${type} "${path}">`);
+      if(opts) l(`        Options ${opts}`);
+      l(`        AllowOverride ${ao}`);
+      l(`        Require ${req}`);
+      l(`    </${type}>`);
+      l('');
+    }
+  });
+
+  // Rewrites
+  if(isOn('rw_engine')){
+    l(`    # mod_rewrite`);
+    l(`    RewriteEngine On`);
+    if(v('rw_base')) l(`    RewriteBase ${v('rw_base','/')}`);
+    if(isOn('rw_force_https')){
+      l(`    RewriteCond %{HTTPS} off`);
+      l(`    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]`);
+    }
+    if(isOn('rw_force_www')){
+      l(`    RewriteCond %{HTTP_HOST} !^www\\. [NC]`);
+      l(`    RewriteRule ^(.*)$ https://www.%{HTTP_HOST}/$1 [L,R=301]`);
+    }
+    if(isOn('rw_remove_www')){
+      l(`    RewriteCond %{HTTP_HOST} ^www\\.(.+)$ [NC]`);
+      l(`    RewriteRule ^(.*)$ https://%1/$1 [L,R=301]`);
+    }
+    if(isOn('rw_slash')){
+      l(`    RewriteCond %{REQUEST_FILENAME} !-f`);
+      l(`    RewriteCond %{REQUEST_URI} !/$`);
+      l(`    RewriteRule ^(.*[^/])$ /$1/ [L,R=301]`);
+    }
+    if(isOn('rw_clean_url')){
+      l(`    RewriteCond %{REQUEST_FILENAME} !-f`);
+      l(`    RewriteCond %{REQUEST_FILENAME} !-d`);
+      l(`    RewriteRule ^(.*)$ /index.php?q=$1 [L,QSA]`);
+    }
+    // Custom conditions
+    document.querySelectorAll('#rewrite-conds .entry-item').forEach(c=>{
+      const ci=c.querySelectorAll('input');
+      if(ci[0]&&ci[0].value) l(`    RewriteCond ${ci[0].value} ${ci[1]?ci[1].value:''} ${ci[2]?ci[2].value:''}`);
+    });
+    // Custom rules
+    document.querySelectorAll('#rewrite-rules .entry-item').forEach(r=>{
+      const ri=r.querySelectorAll('input');
+      if(ri[0]&&ri[0].value) l(`    RewriteRule ${ri[0].value} ${ri[1]?ri[1].value:''} ${ri[2]?ri[2].value:'[L]'}`);
+    });
+    l('');
+  }
+
+  // Rate limit
+  if(isOn('rl_enabled')){
+    l(`    # Rate limiting`);
+    l(`    <IfModule mod_ratelimit.c>`);
+    l(`        SetOutputFilter RATE_LIMIT`);
+    l(`        SetEnv rate-limit ${v('rl_bwrate','500')}`);
+    l(`    </IfModule>`);
+    l('');
+  }
+
+  // Aliases
+  document.querySelectorAll('#aliases .entry-item').forEach(a=>{
+    const sel=a.querySelector('select');
+    const inputs=a.querySelectorAll('input');
+    if(inputs[0]&&inputs[1]&&inputs[0].value){
+      l(`    ${sel?sel.value:'Alias'} ${inputs[0].value} "${inputs[1].value}"`);
+    }
+  });
+
+  // Error documents
+  document.querySelectorAll('#errordocs .entry-item').forEach(e=>{
+    const inputs=e.querySelectorAll('input');
+    if(inputs[0]&&inputs[1]&&inputs[0].value) l(`    ErrorDocument ${inputs[0].value} ${inputs[1].value}`);
+  });
+  l('');
+
+  // Env vars
+  const evs=document.querySelectorAll('#envvars-list .entry-item');
+  if(evs.length>0){
+    l(`    # Variables d'environnement`);
+    evs.forEach(e=>{
+      const sel=e.querySelector('select');
+      const inputs=e.querySelectorAll('input');
+      if(inputs[0]&&inputs[0].value){
+        const dir=sel?sel.value:'SetEnv';
+        if(dir==='UnsetEnv') l(`    UnsetEnv ${inputs[0].value}`);
+        else l(`    ${dir} ${inputs[0].value} ${inputs[1]?inputs[1].value:''}`);
+      }
+    });
+    l('');
+  }
+
+  // Logs
+  l(`    ErrorLog \${APACHE_LOG_DIR}/${v('vh_servername','example.com')}_error.log`);
+  l(`    CustomLog \${APACHE_LOG_DIR}/${v('vh_servername','example.com')}_access.log ${v('log_format_name','combined')}`);
+  l('');
+  l(`</VirtualHost>`);
+
+  return L.join('\n');
+}
+
+function genSSL(){
+  const L=[]; const l=(s)=>L.push(s);
+  l('# ssl.conf — Configuration SSL globale Apache2');
+  l('# Charger dans /etc/apache2/conf-enabled/ssl.conf');
+  l(`# ${new Date().toISOString()}`);
+  l('');
+  l('<IfModule mod_ssl.c>');
+  l(`    SSLProtocol ${document.getElementById('ssl_protocol')?document.getElementById('ssl_protocol').value:'all -SSLv3 -TLSv1 -TLSv1.1'}`);
+  l(`    SSLCipherSuite ${v('ssl_ciphers','ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256')}`);
+  l(`    SSLHonorCipherOrder ${document.getElementById('ssl_honor')?document.getElementById('ssl_honor').value:'on'}`);
+  l(`    SSLOpenSSLConfCmd Curves ${v('ssl_curves','X25519:prime256v1:secp384r1')}`);
+  l(`    SSLSessionTickets ${document.getElementById('ssl_tickets')?document.getElementById('ssl_tickets').value:'off'}`);
+  l('');
+  l(`    SSLSessionCache ${v('ssl_session_cache','shmcb:${APACHE_RUN_DIR}/ssl_scache(512000)')}`);
+  l(`    SSLSessionCacheTimeout ${v('ssl_session_timeout','300')}`);
+  l('');
+  if(document.getElementById('ssl_stapling')&&document.getElementById('ssl_stapling').value==='on'){
+    l(`    SSLUseStapling on`);
+    l(`    SSLStaplingCache ${v('ssl_stapling_cache','shmcb:${APACHE_RUN_DIR}/ssl_stapling(32768)')}`);
+    l(`    SSLStaplingResponderTimeout ${v('ssl_stapling_timeout','5')}`);
+    l(`    SSLStaplingReturnResponderErrors ${document.getElementById('ssl_stapling_errors')?document.getElementById('ssl_stapling_errors').value:'off'}`);
+    l('');
+  }
+  if(isOn('ssl_mtls')){
+    l(`    # mTLS`);
+    l(`    SSLVerifyClient ${document.getElementById('ssl_verify_client')?document.getElementById('ssl_verify_client').value:'require'}`);
+    l(`    SSLVerifyDepth ${v('ssl_verify_depth','2')}`);
+    if(v('ssl_cafile')) l(`    SSLCACertificateFile ${v('ssl_cafile')}`);
+    l('');
+  }
+  if(isOn('ssl_http2')&&isOn('mod_http2')){
+    l('    <IfModule mod_http2.c>');
+    l('        Protocols h2 http/1.1');
+    if(v('ssl_h2_workers')) l(`        H2MaxWorkers ${v('ssl_h2_workers','10')}`);
+    if(isOn('ssl_http2_push')) l('        H2Push on');
+    l('    </IfModule>');
+    l('');
+  }
+  l('</IfModule>');
+  return L.join('\n');
+}
+
+function genHtaccess(){
+  const L=[]; const l=(s)=>L.push(s);
+  l('# .htaccess — Généré par OCASDEV Apache2 Generator');
+  l(`# AllowOverride doit être activé dans le Directory block`);
+  l('');
+  if(document.getElementById('hta_authtype')&&document.getElementById('hta_authtype').value){
+    l(`AuthType ${document.getElementById('hta_authtype').value}`);
+    l(`AuthName "${v('hta_authname','Protected Area')}"`);
+    l(`AuthUserFile ${v('hta_authuserfile','/etc/apache2/.htpasswd')}`);
+    l(`Require valid-user`);
+    l('');
+  }
+  if(isOn('hta_noindex')) l('Options -Indexes');
+  if(isOn('hta_followsym')) l('Options +FollowSymLinks');
+  if(isOn('hta_charset')) l('AddDefaultCharset UTF-8');
+  if(isOn('hta_php_short')) l('php_flag short_open_tag off');
+  document.querySelectorAll('#hta-redirects .entry-item').forEach(r=>{
+    const sel=r.querySelector('select');
+    const inputs=r.querySelectorAll('input');
+    if(inputs[0]&&inputs[1]&&inputs[0].value){
+      l(`${sel?sel.value:'Redirect 301'} ${inputs[0].value} ${inputs[1].value}`);
+    }
+  });
+  if(v('hta_custom')){
+    l('');
+    v('hta_custom').split('\n').forEach(line=>l(line));
+  }
+  l('');
+  l('# Réécriture clean URLs');
+  l('RewriteEngine On');
+  l('RewriteBase /');
+  l('RewriteCond %{REQUEST_FILENAME} !-f');
+  l('RewriteCond %{REQUEST_FILENAME} !-d');
+  l('RewriteRule ^(.*)$ index.php [QSA,L]');
+  return L.join('\n');
+}
+
+function genSecurity(){
+  const L=[]; const l=(s)=>L.push(s);
+  l('# security.conf — Sécurité Apache2');
+  l('# Inclure dans apache2.conf ou conf-enabled/');
+  l(`# ${new Date().toISOString()}`);
+  l('');
+  if(isOn('sec_block_dotfiles')){
+    l('# Bloquer les dotfiles et fichiers sensibles');
+    l('<FilesMatch "^\\.(git|env|htaccess|htpasswd|svn|DS_Store)">');
+    l('    Require all denied');
+    l('</FilesMatch>');
+    l('');
+  }
+  if(isOn('sec_block_backup')){
+    l('# Bloquer les fichiers de backup');
+    l('<FilesMatch "\\.(bak|old|sql|gz|tar|zip|7z|log|conf)$">');
+    l('    Require all denied');
+    l('</FilesMatch>');
+    l('');
+  }
+  if(isOn('sec_block_xmlrpc')){
+    l('# Bloquer xmlrpc.php');
+    l('<FilesMatch "^xmlrpc\\.php$">');
+    l('    Require all denied');
+    l('</FilesMatch>');
+    l('');
+  }
+  if(isOn('sec_limit_methods')){
+    const methods=v('sec_allowed_methods','GET HEAD POST OPTIONS').split(' ').filter(Boolean);
+    l('# Limiter les méthodes HTTP');
+    l('<LimitExcept ' + methods.join(' ') + '>');
+    l('    Require all denied');
+    l('</LimitExcept>');
+    l('');
+  }
+  if(isOn('sec_block_scanners')){
+    l('# Bloquer les user-agents malveillants');
+    l('<IfModule mod_rewrite.c>');
+    l('    RewriteEngine On');
+    l('    RewriteCond %{HTTP_USER_AGENT} (sqlmap|nikto|nmap|masscan|zgrab|dirbuster|hydra|gobuster|wfuzz|burpsuite|arachni) [NC]');
+    l('    RewriteRule .* - [F,L]');
+    l('</IfModule>');
+    l('');
+  }
+  const denyIps=v('sec_deny_ips').split('\n').map(s=>s.trim()).filter(Boolean);
+  const allowIps=v('sec_allow_ips').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(denyIps.length>0||allowIps.length>0){
+    l('# IP Whitelist / Blacklist');
+    l('<RequireAll>');
+    if(allowIps.length>0){ l(`    Require ip ${allowIps.join(' ')}`); }
+    else l('    Require all granted');
+    if(denyIps.length>0){ denyIps.forEach(ip=>l(`    Require not ip ${ip}`)); }
+    l('</RequireAll>');
+    l('');
+  }
+  if(isOn('sec_evasive')){
+    l('# mod_evasive');
+    l('<IfModule mod_evasive24.c>');
+    l(`    DOSSiteCount ${v('ev_sitecount','50')}`);
+    l(`    DOSSiteInterval ${v('ev_siteinterval','1')}`);
+    l(`    DOSPageCount ${v('ev_pagecount','2')}`);
+    l(`    DOSPageInterval ${v('ev_pageinterval','1')}`);
+    l(`    DOSBlockingPeriod ${v('ev_blockperiod','10')}`);
+    if(v('ev_email')) l(`    DOSEmailNotify ${v('ev_email')}`);
+    l(`    DOSLogDir ${v('ev_logdir','/var/log/mod_evasive')}`);
+    l(`    DOSWhitelist ${v('ev_whitelist','127.0.0.1')}`);
+    l('</IfModule>');
+    l('');
+  }
+  if(isOn('sec_modsec')){
+    l('# mod_security2');
+    l('<IfModule mod_security2.c>');
+    l(`    SecRuleEngine ${document.getElementById('sec_modsec_mode')?document.getElementById('sec_modsec_mode').value:'On'}`);
+    l(`    SecRequestBodyLimit ${v('sec_bodylimit','13107200')}`);
+    l(`    SecRequestBodyNoFilesLimit 131072`);
+    l(`    SecAuditEngine ${document.getElementById('sec_audit')?document.getElementById('sec_audit').value:'RelevantOnly'}`);
+    l(`    SecAuditLog ${v('sec_auditlog','/var/log/apache2/modsec_audit.log')}`);
+    l(`    SecAuditLogParts ABCFHZ`);
+    l(`    SecAuditLogType Serial`);
+    if(isOn('sec_crs')){
+      l('');
+      l('    # OWASP CRS — Core Rule Set');
+      l('    IncludeOptional /usr/share/modsecurity-crs/crs-setup.conf');
+      l('    IncludeOptional /usr/share/modsecurity-crs/rules/*.conf');
+    }
+    l('</IfModule>');
+    l('');
+  }
+  if(isOn('qos_enabled')){
+    l('# mod_qos');
+    l('<IfModule mod_qos.c>');
+    l(`    QS_SrvMaxConnClose ${v('qos_maxconn','80')}%`);
+    l(`    QS_SrvMinDataRate ${v('qos_mindatarate','150 1200')}`);
+    l(`    QS_SrvRequestRate ${v('qos_reqrate','200')}`);
+    l(`    QS_ClientEventBlockCount ${v('qos_blockcount','100')}`);
+    l('</IfModule>');
+    l('');
+  }
+  if(isOn('st_status')){
+    l('# mod_status');
+    l(`<Location "${v('st_location','/server-status')}">`);
+    l(`    SetHandler server-status`);
+    v('st_allow','127.0.0.1 ::1').split(/\s+/).forEach(ip=>{ if(ip) l(`    Require ip ${ip}`); });
+    l(`</Location>`);
+    l('');
+  }
+  if(isOn('st_info')){
+    l('# mod_info');
+    l(`<Location "${v('info_location','/server-info')}">`);
+    l(`    SetHandler server-info`);
+    v('info_allow','127.0.0.1').split(/\s+/).forEach(ip=>{ if(ip) l(`    Require ip ${ip}`); });
+    l(`</Location>`);
+    l('');
+  }
+  if(isOn('cache_enabled')){
+    l('# mod_cache');
+    l('<IfModule mod_cache.c>');
+    l(`    CacheEnable disk /`);
+    l(`    CacheDirLevels ${v('cache_dirlevels','5')}`);
+    l(`    CacheDirLength ${v('cache_dirlength','3')}`);
+    l(`    CacheRoot ${v('cache_root','/var/cache/apache2/mod_cache_disk')}`);
+    l(`    CacheMaxFileSize ${v('cache_maxfilesize','1000000')}`);
+    l(`    CacheMinFileSize ${v('cache_minfilesize','1')}`);
+    l(`    CacheDefaultExpire ${v('cache_defaultexpire','3600')}`);
+    l(`    CacheMaxExpire ${v('cache_maxexpire','86400')}`);
+    l(`    CacheLastModifiedFactor ${v('cache_lmfactor','0.5')}`);
+    if(isOn('cache_ignorenolastmod')) l(`    CacheIgnoreNoLastMod On`);
+    if(isOn('cache_lock')){
+      l(`    CacheLock On`);
+      l(`    CacheLockPath ${v('cache_lockpath','/tmp/mod_cache-lock')}`);
+      l(`    CacheLockMaxAge ${v('cache_lockmaxage','5')}`);
+    }
+    l('</IfModule>');
+    l('');
+  }
+  return L.join('\n');
+}
+
+function highlight(code){
+  return code
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/(#[^\n]*)/g,'<span class="cmt">$1</span>')
+    .replace(/\b(VirtualHost|Directory|Files|FilesMatch|Location|LocationMatch|IfModule|Proxy|LimitExcept|RequireAll)\b/g,'<span class="sec">$1</span>')
+    .replace(/\b(ServerName|ServerAlias|DocumentRoot|DirectoryIndex|Options|AllowOverride|Require|SSLEngine|SSLCertificateFile|SSLProtocol|SSLCipherSuite|ProxyPass|ProxyPassReverse|RewriteRule|RewriteCond|Header|LogFormat|CustomLog|ErrorLog|LoadModule|SetHandler|ErrorDocument|Redirect|ExpiresActive|ExpiresByType|ExpiresDefault|AddOutputFilterByType|AuthType|AuthName|AuthUserFile|DeflateCompressionLevel|BrotliCompressionQuality|SecRuleEngine)\b/g,'<span class="key">$1</span>')
+    .replace(/\b(On|Off|All|None|granted|denied)\b/g,'<span class="kw">$1</span>')
+    .replace(/"([^"]*)"/g,'<span class="str">"$1"</span>')
+    .replace(/'([^']*)'/g,"<span class='str'>'$1'</span>")
+    .replace(/(\d+)\b/g,'<span class="num">$1</span>');
+}
+
+function updateGen(){
+  let code='';
+  switch(activeTab){
+    case 'main':     code=genMain(); break;
+    case 'vhost':    code=genVhost(); break;
+    case 'ssl':      code=genSSL(); break;
+    case 'htaccess': code=genHtaccess(); break;
+    case 'security': code=genSecurity(); break;
+  }
+  document.getElementById('output-pre').innerHTML=highlight(code);
+  const lc=code.split('\n').length;
+  document.getElementById('line-count').textContent=lc+' lignes';
+  document.getElementById('status-text').textContent=`Configuration valide · ${lc} lignes`;
+}
+
+function copyConfig(){
+  let code='';
+  switch(activeTab){
+    case 'main':code=genMain();break;case 'vhost':code=genVhost();break;
+    case 'ssl':code=genSSL();break;case 'htaccess':code=genHtaccess();break;
+    case 'security':code=genSecurity();break;
+  }
+  navigator.clipboard.writeText(code).then(()=>{
+    const f=document.getElementById('copy-flash');
+    f.classList.add('show');
+    setTimeout(()=>f.classList.remove('show'),2200);
+  });
+}
+
+function downloadConfig(){
+  let code='', fname=activeFilename||'apache2.conf';
+  switch(activeTab){
+    case 'main':code=genMain();break;case 'vhost':code=genVhost();break;
+    case 'ssl':code=genSSL();break;case 'htaccess':code=genHtaccess();fname='.htaccess';break;
+    case 'security':code=genSecurity();break;
+  }
+  const blob=new Blob([code],{type:'text/plain'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+}
+
+document.addEventListener('input',updateGen);
+document.addEventListener('change',updateGen);
+updateGen();
+</script>
+</body>
+</html>
